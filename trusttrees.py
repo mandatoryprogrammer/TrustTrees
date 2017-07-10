@@ -9,6 +9,8 @@ import random
 import json
 import time
 import sys
+import os
+import errno
 from pprint import pprint
 from subprocess import call as subprocess_call
 import pygraphviz as pgv
@@ -483,6 +485,11 @@ if __name__ == "__main__":
 
     for export_format in export_formats:
         file_name = output_graph_file + export_format
+        try:
+            os.mkdir("output")
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
         grapher.draw( file_name, prog="dot" )
         if args.open:
             print( "[ STATUS ] Opening final graph..." )
