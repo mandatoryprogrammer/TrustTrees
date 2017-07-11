@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import dns.resolver
 import tldextract
 import dns.flags
@@ -121,7 +122,7 @@ def pprint( input_dict ):
 
 def dump(obj):
   for attr in dir(obj):
-    print "obj.%s = %s" % (attr, getattr(obj, attr))
+    print( "obj.%s = %s" % (attr, getattr(obj, attr)) )
 
 def get_random_root_ns_set():
     return random.choice( ROOT_SERVERS )
