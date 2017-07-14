@@ -8,7 +8,7 @@ import argparse
 import random
 import json
 import time
-import sys
+import os
 from pprint import pprint
 from subprocess import call as subprocess_call
 import pygraphviz as pgv
@@ -481,6 +481,9 @@ if __name__ == "__main__":
     else:
         export_formats.append( "png" )
 
+    # need to make sure output directory exists
+    if not os.path.exists('output'):
+        os.mkdir('output')
     for export_format in export_formats:
         file_name = output_graph_file + export_format
         grapher.draw( file_name, prog="dot" )
