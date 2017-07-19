@@ -140,7 +140,7 @@ def is_authoratative( flags ):
 
 def ns_query( hostname, nameserver_ip, nameserver_hostname ):
     if not hostname.endswith( "." ):
-        hostname += hostname + "."
+        hostname += "."
 
     # Normalize input query data
     hostname = hostname.lower()
