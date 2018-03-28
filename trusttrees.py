@@ -454,46 +454,65 @@ def print_logo():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser( description="Graph out a domain's DNS delegation chain and trust trees!" )
-    parser.add_argument( "-t", "--target", dest="target_hostname", help="Target hostname to generate delegation graph from.", required=True )
+    parser.add_argument( "-t", "--target", dest="target_hostname", help="Target hostname to generate delegation graph from.", required=False )
     parser.add_argument( "-o", "--open", dest="open", help="Open the generated graph once run.", action="store_true" )
     parser.add_argument( "-dc", "--domain-check", dest="domain_check", help="Check if nameserver base domains are expired. Specify a Gandi API key." )
     parser.add_argument( "-x", "--export-formats", dest="export_formats", help="Comma-seperated export formats, e.g: -x png,pdf" )
+    parser.add_argument( "-l", "--domain-list", dest="domain_list", help="File that contain domain list" )
+
     args = parser.parse_args()
 
+    # array to store hostnames
+    target_hostnames_array = []
+
     print_logo()
+
 
     if args.domain_check:
         GANDI_API_KEY = args.domain_check
 
-    target_hostname = args.target_hostname
-
-    enumerate_nameservers( target_hostname )
-
-    # Render graph image
-    grapher = pgv.AGraph(
-        draw_graph_from_cache( target_hostname )
-    )
-
-    output_graph_file = "./output/" + target_hostname + "_trust_tree_graph."
-
-    export_formats = []
-    if args.export_formats:
-        export_parts = args.export_formats.split( "," )
-        for part in export_parts:
-            export_formats.append( part.strip() )
+    if args.domain_list:
+        if os.path.isfile(args.domain_list):
+            # open file and loop over items
+            f = open(args.domain_list, 'r')
+            for line in f:
+                target_hostnames_array.append(line)
+        else:
+            print("Error:  cannot find %s" % (args.domain_list))
     else:
-        export_formats.append( "png" )
+        target_hostnames_array.append(args.target_hostname)
 
-    for export_format in export_formats:
-        file_name = output_graph_file + export_format
-        try:
-            os.mkdir("output")
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-        grapher.draw( file_name, prog="dot" )
-        if args.open:
-            print( "[ STATUS ] Opening final graph..." )
-            subprocess_call( [ "open", file_name ])
 
-    print( "[ SUCCESS ] Finished generating graph!" )
+    for target_hostname in target_hostnames_array:
+
+        enumerate_nameservers( target_hostname )
+
+
+        # Render graph image
+        grapher = pgv.AGraph(
+            draw_graph_from_cache( target_hostname )
+        )
+
+        output_graph_file = "./output/" + target_hostname + "_trust_tree_graph."
+
+        export_formats = []
+        if args.export_formats:
+            export_parts = args.export_formats.split( "," )
+            for part in export_parts:
+                export_formats.append( part.strip() )
+        else:
+            export_formats.append( "png" )
+
+        for export_format in export_formats:
+            file_name = output_graph_file + export_format
+            try:
+                os.mkdir("output")
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+            grapher.draw( file_name, prog="dot" )
+            if args.open:
+                print( "[ STATUS ] Opening final graph..." )
+                subprocess_call( [ "open", file_name ])
+
+        print( "[ SUCCESS ] Finished generating graph for %s !" % (target_hostname) )
