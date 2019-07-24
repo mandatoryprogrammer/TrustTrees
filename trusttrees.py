@@ -12,11 +12,12 @@ import dns.flags
 import dns.rcode
 import dns.rdatatype
 import dns.resolver
-import pygraphviz as pgv
+import pygraphviz
 import tldextract
 import xmlrpclib
 
 gandi_api = xmlrpclib.ServerProxy('https://rpc.gandi.net/xmlrpc/')
+GANDI_API_KEY = ''
 
 BLUE = '#0099ff'
 GRAY = '#a3a3a3'
@@ -33,10 +34,10 @@ ROOT_SERVERS = [
     {'ip': '192.5.5.241', 'hostname': 'f.root-servers.net.'},
 ]
 
+DNS_WATCH_RESOLVER = '84.200.69.80'
 DOMAIN_AVAILABILITY_CACHE = {}
-MAX_RECURSION_DEPTH = 4
 IPV6_ENABLED = False
-DEFAULT_RESOLVER = '84.200.69.80'
+MAX_RECURSION_DEPTH = 4
 PREVIOUS_EDGES = []
 
 """
@@ -51,7 +52,7 @@ MASTER_DNS_CACHE = {}
 """
 A key/value map of all the glue records we have seen.
 
-This keys an easy map of nameserver names to IP addresses.
+This creates an easy map of nameserver names to IP addresses.
 
 Example:
 {
@@ -73,8 +74,6 @@ A list of DNS errors returned whilst querying nameservers.
 This is used in graphing to show where the flow breaks.
 """
 QUERY_ERROR_LIST = []
-
-GANDI_API_KEY = ''
 
 
 def is_domain_available(input_domain):
@@ -320,35 +319,30 @@ def _enumerate_nameservers(domain_name, previous_ns_result, depth=0):
     """
     Take the previous DNS results and do DNS queries against all of the returned nameservers.
     """
-
-    # Start with NS returned in ADDITIONAL section of answer.
-    for ns_rrset in previous_ns_result['additional_ns']:
-        ns_results = ns_query(
-            domain_name, ns_rrset['ns_ip'], ns_rrset['ns_hostname'],
-        )
-
-        if depth < MAX_RECURSION_DEPTH:
-            _enumerate_nameservers(
-                domain_name, ns_results, (depth + 1),
-            )
-
-    for ns_rrset in previous_ns_result['answer_ns']:
-        if 'ns_ip' in ns_rrset:
+    for section_of_NS_answer, check_for_ns_ip in (
+        (
+            previous_ns_result['additional_ns'],
+            False,
+        ),
+        (
+            previous_ns_result['answer_ns'],
+            True,
+        ),
+        (
+            previous_ns_result['authority_ns'],
+            True,
+        ),
+    ):
+        for ns_rrset in section_of_NS_answer:
+            if (
+                check_for_ns_ip
+                and
+                'ns_ip' not in ns_rrset
+            ):
+                continue
             ns_results = ns_query(
                 domain_name, ns_rrset['ns_ip'], ns_rrset['ns_hostname'],
             )
-
-            if depth < MAX_RECURSION_DEPTH:
-                _enumerate_nameservers(
-                    domain_name, ns_results, (depth + 1),
-                )
-
-    for ns_rrset in previous_ns_result['authority_ns']:
-        if 'ns_ip' in ns_rrset:
-            ns_results = ns_query(
-                domain_name, ns_rrset['ns_ip'], ns_rrset['ns_hostname'],
-            )
-
             if depth < MAX_RECURSION_DEPTH:
                 _enumerate_nameservers(
                     domain_name, ns_results, (depth + 1),
@@ -495,7 +489,7 @@ def get_graph_data_for_ns_results(ns_list, ns_results):
 def get_hostname_ips(hostname):
     return_ips = []
     try:
-        answer = dns_query(hostname, 'A', target_nameserver=DEFAULT_RESOLVER)
+        answer = dns_query(hostname, 'A', target_nameserver=DNS_WATCH_RESOLVER)
         if answer.rrset:
             for rrset in answer.rrset:
                 return_ips.append(str(rrset))
@@ -567,7 +561,9 @@ if __name__ == '__main__':
     ]
     output_graph_file = './output/{}_trust_tree_graph.'.format(target_hostname)
     # Render graph image
-    grapher = pgv.AGraph(draw_graph_from_cache(target_hostname))
+    grapher = pygraphviz.AGraph(
+        draw_graph_from_cache(target_hostname),
+    )
 
     for export_format in export_formats:
         file_name = output_graph_file + export_format
