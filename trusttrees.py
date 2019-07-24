@@ -560,6 +560,7 @@ if __name__ == '__main__':
         '--domain-check',
         dest='domain_check',
         help='Check if nameserver base domains are expired. Specify a Gandi API key.',
+        metavar='GANDI_API_KEY',
     )
     parser.add_argument(
         '-x',
