@@ -3,7 +3,6 @@ from __future__ import print_function
 
 import argparse
 import errno
-import json
 import os
 import random
 import subprocess
@@ -17,6 +16,12 @@ import tldextract
 import xmlrpclib
 
 gandi_api = xmlrpclib.ServerProxy('https://rpc.gandi.net/xmlrpc/')
+
+BLUE = '#0099ff'
+GRAY = '#a3a3a3'
+RED = '#ff0000'
+ORANGE = '#ff7700'
+YELLOW = '#fff200'
 
 ROOT_SERVERS = [
     {'ip': '198.41.0.4', 'hostname': 'a.root-servers.net.'},
@@ -94,23 +99,9 @@ def is_domain_available(input_domain):
     return domain_available
 
 
-def get_tld_from_domain(input_hostname):
-    tldexact_parts = tldextract.extract('http://' + input_hostname)
-    return tldexact_parts.suffix + '.'
-
-
 def get_base_domain(input_hostname):
     tldexact_parts = tldextract.extract('http://' + input_hostname)
     return tldexact_parts.domain + '.' + tldexact_parts.suffix + '.'
-
-
-def pprint(input_dict):
-    print(json.dumps(input_dict, sort_keys=True, indent=4, separators=(',', ': ')))
-
-
-def dump(obj):
-    for attr in dir(obj):
-        print('obj.%s = %s' % (attr, getattr(obj, attr)))
 
 
 def get_random_root_ns_set():
@@ -250,8 +241,10 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
                     )
 
                     # If this was an authoratative answer we need to save that for graphing.
-                    if is_authoratative(return_dict['flags']) and not (
-                        ns_hostname in AUTHORITATIVE_NS_LIST
+                    if (
+                        is_authoratative(return_dict['flags'])
+                        and
+                        ns_hostname not in AUTHORITATIVE_NS_LIST
                     ):
                         AUTHORITATIVE_NS_LIST.append(ns_hostname)
 
@@ -289,8 +282,10 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
                 return_dict['authority_ns'].append(ns_dict)
 
                 # If this was an authoratative answer we need to save that for graphing.
-                if is_authoratative(return_dict['flags']) and not (
-                    ns_hostname in AUTHORITATIVE_NS_LIST
+                if (
+                    is_authoratative(return_dict['flags'])
+                    and
+                    ns_hostname not in AUTHORITATIVE_NS_LIST
                 ):
                     AUTHORITATIVE_NS_LIST.append(ns_hostname)
 
@@ -326,8 +321,10 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
                 return_dict['answer_ns'].append(ns_dict)
 
                 # If this was an authoratative answer we need to save that for graphing.
-                if is_authoratative(return_dict['flags']) and not (
-                    ns_hostname in AUTHORITATIVE_NS_LIST
+                if (
+                    is_authoratative(return_dict['flags'])
+                    and
+                    ns_hostname not in AUTHORITATIVE_NS_LIST
                 ):
                     AUTHORITATIVE_NS_LIST.append(ns_hostname)
 
@@ -346,10 +343,10 @@ def enumerate_nameservers(domain_name):
         domain_name, root_ns_set['ip'], root_ns_set['hostname'],
     )
 
-    return _enumerate_nameservers(domain_name, tld_ns_results, 0, MAX_RECURSION_DEPTH)
+    return _enumerate_nameservers(domain_name, tld_ns_results)
 
 
-def _enumerate_nameservers(domain_name, previous_ns_result, depth, max_depth):
+def _enumerate_nameservers(domain_name, previous_ns_result, depth=0):
     """
     Take the previous DNS results and do DNS queries against all of the returned nameservers.
     """
@@ -360,9 +357,9 @@ def _enumerate_nameservers(domain_name, previous_ns_result, depth, max_depth):
             domain_name, ns_rrset['ns_ip'], ns_rrset['ns_hostname'],
         )
 
-        if depth < max_depth:
+        if depth < MAX_RECURSION_DEPTH:
             _enumerate_nameservers(
-                domain_name, ns_results, (depth + 1), max_depth,
+                domain_name, ns_results, (depth + 1),
             )
 
     for ns_rrset in previous_ns_result['answer_ns']:
@@ -371,9 +368,9 @@ def _enumerate_nameservers(domain_name, previous_ns_result, depth, max_depth):
                 domain_name, ns_rrset['ns_ip'], ns_rrset['ns_hostname'],
             )
 
-            if depth < max_depth:
+            if depth < MAX_RECURSION_DEPTH:
                 _enumerate_nameservers(
-                    domain_name, ns_results, (depth + 1), max_depth,
+                    domain_name, ns_results, (depth + 1),
                 )
 
     for ns_rrset in previous_ns_result['authority_ns']:
@@ -382,9 +379,9 @@ def _enumerate_nameservers(domain_name, previous_ns_result, depth, max_depth):
                 domain_name, ns_rrset['ns_ip'], ns_rrset['ns_hostname'],
             )
 
-            if depth < max_depth:
+            if depth < MAX_RECURSION_DEPTH:
                 _enumerate_nameservers(
-                    domain_name, ns_results, (depth + 1), max_depth,
+                    domain_name, ns_results, (depth + 1),
                 )
 
 
@@ -442,9 +439,11 @@ def get_graph_data_for_ns_results(ns_list, ns_results):
             )
 
             if 'AA' not in ns_results['flags']:
-                return_graph_data_string += '[style="dashed", color="#a3a3a3"] '
+                return_graph_data_string += '[style="dashed", color="{}"] '.format(
+                    GRAY,
+                )
             else:
-                return_graph_data_string += '[color="#0099ff"] '
+                return_graph_data_string += '[color="{}"] '.format(BLUE)
 
             return_graph_data_string += ';\n'
 
@@ -453,7 +452,7 @@ def get_graph_data_for_ns_results(ns_list, ns_results):
         return_graph_data_string += (
             '"'
             + ns_hostname
-            + '" [shape=ellipse, style=filled, fillcolor="#0099ff"];\n'
+            + '" [shape=ellipse, style=filled, fillcolor="{}"];\n'.format(BLUE)
         )
 
     # Make all nameservers without any IP red because they might be vulnerable.
@@ -462,7 +461,7 @@ def get_graph_data_for_ns_results(ns_list, ns_results):
             return_graph_data_string += (
                 '"'
                 + ns_hostname
-                + '" [shape=ellipse, style=filled, fillcolor="#ff0000"];\n'
+                + '" [shape=ellipse, style=filled, fillcolor="{}"];\n'.format(RED)
             )
 
         base_domain = get_base_domain(ns_hostname)
@@ -477,7 +476,7 @@ def get_graph_data_for_ns_results(ns_list, ns_results):
                 return_graph_data_string += (
                     '"'
                     + node_name
-                    + '"[shape=octagon, style=filled, fillcolor="#ff7700"];\n'
+                    + '"[shape=octagon, style=filled, fillcolor="{}"];\n'.format(ORANGE)
                 )
 
     # Make nodes for DNS error states encountered like NXDOMAIN, Timeout, etc.
@@ -507,23 +506,10 @@ def get_graph_data_for_ns_results(ns_list, ns_results):
             return_graph_data_string += (
                 '"'
                 + query_error['error']
-                + '" [shape=octagon, style=filled, fillcolor="#fff200"];\n'
+                + '" [shape=octagon, style=filled, fillcolor="{}"];\n'.format(YELLOW)
             )
 
     return return_graph_data_string
-
-
-def write_file(file_name, file_data):
-    file_handler = open(file_name, 'w')
-    file_handler.write(file_data)
-    file_handler.close()
-
-
-def read_file(file_name):
-    file_handler = open(file_name, 'r')
-    contents = file_handler.read()
-    file_handler.close()
-    return contents
 
 
 def get_hostname_ips(hostname):
