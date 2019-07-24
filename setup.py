@@ -1,25 +1,27 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
+
+
 __VERSION__ = "1.0.0"
+
 
 def requirements():
     with open('requirements.txt') as reqs:
         install_req = [line for line in reqs.read().split('\n')]
     return install_req
 
-def readme():
-    with open("README.md") as f:
-        return f.read()
 
 setup(
-    name="TrustTree",
+    name="TrustTrees",
     url="https://github.com/mandatoryprogrammer/TrustTrees",
     description="A Tool for DNS Delegation Trust Graphing",
     version=__VERSION__,
-    long_description=readme(),
-    keywords="trusttree, dns, dnssec",
+    long_description=(
+        'Check out TrustTrees on `GitHub <https://github.com/mandatoryprogrammer/TrustTrees>`_!'
+    ),
+    keywords="subdomain, subdomain-takeover, dns, dnssec, security, bug-bounty, bugbounty",
     author="mandatoryprogrammer",
     packages=find_packages(),
     install_requires=requirements(),
     scripts=['trusttrees.py'],
-    include_package_data=True
+    include_package_data=True,
 )
