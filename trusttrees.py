@@ -111,11 +111,15 @@ def get_random_root_ns_set():
 def dns_query(target_hostname, query_type, target_nameserver):
     res = dns.resolver.Resolver(configure=False)
     res.nameservers = [target_nameserver]
-    results = res.query(target_hostname, query_type, raise_on_no_answer=False)
+    results = res.query(
+        qname=target_hostname,
+        rdtype=query_type,
+        raise_on_no_answer=False,
+    )
     return results
 
 
-def is_authoratative(flags):
+def is_authoritative(flags):
     return 'AA' in flags
 
 
@@ -140,13 +144,11 @@ def ns_query(hostname, nameserver_ip, nameserver_hostname):
 
 def _ns_query(hostname, nameserver_ip, nameserver_hostname):
     print(
-        "[ STATUS ] Querying nameserver '"
-        + nameserver_ip
-        + '/'
-        + nameserver_hostname
-        + "' for NS of '"
-        + hostname
-        + "'",
+        "[ STATUS ] Querying nameserver '{}/{}' for NS of '{}'".format(
+            nameserver_ip,
+            nameserver_hostname,
+            hostname,
+        ),
     )
 
     """
@@ -174,30 +176,30 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
         'success': False,
     }
 
-    dns_query_error_occured = False
+    dns_query_error = None
 
     try:
-        results = dns_query(hostname, 'NS', nameserver_ip)
+        results = dns_query(hostname, 'NS', target_nameserver=nameserver_ip)
     except dns.resolver.NXDOMAIN:
-        dns_query_error_occured = 'NXDOMAIN'
+        dns_query_error = 'NXDOMAIN'
         return_dict['rcode'] = 3
     except dns.resolver.Timeout:
-        dns_query_error_occured = 'TIMEOUT'
+        dns_query_error = 'TIMEOUT'
         return_dict['rcode'] = -1
     except dns.resolver.YXDOMAIN:
-        dns_query_error_occured = 'YXDOMAIN'
+        dns_query_error = 'YXDOMAIN'
         return_dict['rcode'] = 6
     except dns.resolver.NoNameservers:
-        # TODO, this fucking blows, figure out a way to do this without an exception.
-        dns_query_error_occured = 'FATAL_ERROR'
+        # TODO: This fucking blows, figure out a way to do this without an exception.
+        dns_query_error = 'FATAL_ERROR'
         return_dict['rcode'] = -1
 
-    if dns_query_error_occured:
-        return_dict['rcode_string'] = dns_query_error_occured
+    if dns_query_error:
+        return_dict['rcode_string'] = dns_query_error
         QUERY_ERROR_LIST.append(
             {
                 'hostname': hostname,
-                'error': dns_query_error_occured,
+                'error': dns_query_error,
                 'ns_hostname': nameserver_hostname,
             },
         )
@@ -242,7 +244,7 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
 
                     # If this was an authoratative answer we need to save that for graphing.
                     if (
-                        is_authoratative(return_dict['flags'])
+                        is_authoritative(return_dict['flags'])
                         and
                         ns_hostname not in AUTHORITATIVE_NS_LIST
                     ):
@@ -283,7 +285,7 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
 
                 # If this was an authoratative answer we need to save that for graphing.
                 if (
-                    is_authoratative(return_dict['flags'])
+                    is_authoritative(return_dict['flags'])
                     and
                     ns_hostname not in AUTHORITATIVE_NS_LIST
                 ):
@@ -322,7 +324,7 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
 
                 # If this was an authoratative answer we need to save that for graphing.
                 if (
-                    is_authoratative(return_dict['flags'])
+                    is_authoritative(return_dict['flags'])
                     and
                     ns_hostname not in AUTHORITATIVE_NS_LIST
                 ):
@@ -388,25 +390,31 @@ def _enumerate_nameservers(domain_name, previous_ns_result, depth=0):
 def draw_graph_from_cache(target_hostname):
     GRAPH_DATA = (
         """
-        digraph G {
-        graph [ label=\""""
-        + target_hostname
-        + """ DNS Trust Graph\", labelloc="t", pad="3", nodesep="1", ranksep="5", fontsize=50];
+        digraph G {{
+        graph [
+            label=\"{} DNS Trust Graph\",
+            labelloc="t",
+            pad="3",
+            nodesep="1",
+            ranksep="5",
+            fontsize=50
+        ];
         edge[arrowhead=vee, arrowtail=inv, arrowsize=.7]
         concentrate=true;
-        """
+        """.format(target_hostname)
     )
+
     for cache_key, ns_results in MASTER_DNS_CACHE.iteritems():
         print("[ STATUS ] Building '" + cache_key + "'...")
-        GRAPH_DATA += get_graph_data_for_ns_results(
-            ns_results['authority_ns'], ns_results,
-        )
-        GRAPH_DATA += get_graph_data_for_ns_results(
-            ns_results['additional_ns'], ns_results,
-        )
-        GRAPH_DATA += get_graph_data_for_ns_results(
-            ns_results['answer_ns'], ns_results,
-        )
+        for ns_list in (
+            ns_results['authority_ns'],
+            ns_results['additional_ns'],
+            ns_results['answer_ns'],
+        ):
+            GRAPH_DATA += get_graph_data_for_ns_results(
+                ns_list,
+                ns_results,
+            )
 
     GRAPH_DATA += '\n}'
     return GRAPH_DATA
@@ -423,45 +431,45 @@ def get_graph_data_for_ns_results(ns_list, ns_results):
         if potential_edge not in PREVIOUS_EDGES:
             PREVIOUS_EDGES.append(potential_edge)
             return_graph_data_string += (
-                '"'
-                + ns_results['nameserver_hostname']
-                + '" -> "'
-                + ns_rrset['ns_hostname']
-                + '" [shape=ellipse]'
+                '"{}" -> "{}" [shape=ellipse]'.format(
+                    ns_results['nameserver_hostname'],
+                    ns_rrset['ns_hostname'],
+                )
             )
 
             return_graph_data_string += (
-                '[label=<<i>'
-                + ns_results['hostname']
-                + '?</i><br /><font point-size="10">'
-                + ns_results['rcode_string']
-                + '</font>>] '
+                '[label=<<i>{}?</i><br /><font point-size="10">{}</font>>] '.format(
+                    ns_results['hostname'],
+                    ns_results['rcode_string'],
+                )
             )
 
-            if 'AA' not in ns_results['flags']:
+            if is_authoritative(ns_results['flags']):
+                return_graph_data_string += '[color="{}"] '.format(BLUE)
+            else:
                 return_graph_data_string += '[style="dashed", color="{}"] '.format(
                     GRAY,
                 )
-            else:
-                return_graph_data_string += '[color="{}"] '.format(BLUE)
 
             return_graph_data_string += ';\n'
 
     # Make all nameservers which were specified with an AA flag blue.
     for ns_hostname in AUTHORITATIVE_NS_LIST:
         return_graph_data_string += (
-            '"'
-            + ns_hostname
-            + '" [shape=ellipse, style=filled, fillcolor="{}"];\n'.format(BLUE)
+            '"{}" [shape=ellipse, style=filled, fillcolor="{}"];\n'.format(
+                ns_hostname,
+                BLUE,
+            )
         )
 
     # Make all nameservers without any IP red because they might be vulnerable.
     for ns_hostname, ns_hostname_ip_list in NS_IP_MAP.iteritems():
         if len(ns_hostname_ip_list) == 0:
             return_graph_data_string += (
-                '"'
-                + ns_hostname
-                + '" [shape=ellipse, style=filled, fillcolor="{}"];\n'.format(RED)
+                '"{}" [shape=ellipse, style=filled, fillcolor="{}"];\n'.format(
+                    ns_hostname,
+                    RED,
+                )
             )
 
         base_domain = get_base_domain(ns_hostname)
@@ -471,42 +479,46 @@ def get_graph_data_for_ns_results(ns_list, ns_results):
             if potential_edge not in PREVIOUS_EDGES:
                 PREVIOUS_EDGES.append(potential_edge)
                 return_graph_data_string += (
-                    '"' + ns_hostname + '" -> "' + node_name + '";\n'
+                    '"{}" -> "{}";\n'.format(
+                        ns_hostname,
+                        node_name,
+                    ),
                 )
                 return_graph_data_string += (
-                    '"'
-                    + node_name
-                    + '"[shape=octagon, style=filled, fillcolor="{}"];\n'.format(ORANGE)
+                    '"{}"[shape=octagon, style=filled, fillcolor="{}"];\n'.format(
+                        node_name,
+                        ORANGE,
+                    )
                 )
 
     # Make nodes for DNS error states encountered like NXDOMAIN, Timeout, etc.
     for query_error in QUERY_ERROR_LIST:
         potential_edge = (
-            query_error['ns_hostname']
-            + '->'
-            + query_error['error']
+            '{}->{}'.format(
+                query_error['ns_hostname'],
+                query_error['error'],
+            )
         )
 
         if potential_edge not in PREVIOUS_EDGES:
             PREVIOUS_EDGES.append(potential_edge)
             return_graph_data_string += (
-                '"'
-                + query_error['ns_hostname']
-                + '" -> "'
-                + query_error['error']
-                + '" '
+                '"{}" -> "{}" '.format(
+                    query_error['ns_hostname'],
+                    query_error['error'],
+                )
             )
             return_graph_data_string += (
-                '[label=<<i>'
-                + query_error['hostname']
-                + '?</i><br /><font point-size="10">'
-                + query_error['error']
-                + '</font>>];\n'
+                '[label=<<i>{}?</i><br /><font point-size="10">{}</font>>];\n'.format(
+                    query_error['hostname'],
+                    query_error['error'],
+                ),
             )
             return_graph_data_string += (
-                '"'
-                + query_error['error']
-                + '" [shape=octagon, style=filled, fillcolor="{}"];\n'.format(YELLOW)
+                '"{}" [shape=octagon, style=filled, fillcolor="{}"];\n'.format(
+                    query_error['error'],
+                    YELLOW,
+                )
             )
 
     return return_graph_data_string
@@ -515,7 +527,7 @@ def get_graph_data_for_ns_results(ns_list, ns_results):
 def get_hostname_ips(hostname):
     return_ips = []
     try:
-        answer = dns_query(hostname, 'A', DEFAULT_RESOLVER)
+        answer = dns_query(hostname, 'A', target_nameserver=DEFAULT_RESOLVER)
         if answer.rrset:
             for rrset in answer.rrset:
                 return_ips.append(str(rrset))
