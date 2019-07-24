@@ -48,7 +48,7 @@ e.g.
 MASTER_DNS_CACHE = {}
 
 """
-A key/value map of all the glue records we've seen.
+A key/value map of all the glue records we have seen.
 
 This keys an easy map of nameserver names to IP addresses.
 
@@ -60,7 +60,7 @@ Example:
 NS_IP_MAP = {}
 
 """
-A simple list of nameservers which were returned with the authoratative answer flag set.
+A simple list of nameservers which were returned with the authoritative answer flag set.
 
 Used for graphing to make it clear where the flow of queries ends.
 """
@@ -205,7 +205,7 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
         )
         return return_dict
 
-    # If we've made it this far we can mark the response as successful.
+    # If we have made it this far we can mark the response as successful.
     return_dict['success'] = True
 
     return_dict['flags'] = dns.flags.to_text(results.response.flags).split(' ')
@@ -215,46 +215,54 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
     # ADDITIONAL section of NS answer
     ns_hostnames_with_ip = []
     for rrset in results.response.additional:
-        if rrset.rdtype == 2:
-            for rrset_value in rrset.items:
-                if (
-                    ':' in str(rrset_value)
-                    and
-                    IPV6_ENABLED
-                ) or (
-                    ':' not in str(rrset_value)
-                ):
-                    ns_ip = str(rrset_value).lower()
-                    ns_hostname = str(rrset.name).lower()
+        if rrset.rdtype != 2:
+            continue
+        for rrset_value in rrset.items:
+            if (
+                ':' in str(rrset_value)
+                and
+                not IPV6_ENABLED
+            ):
+                continue
+            ns_ip = str(rrset_value).lower()
+            ns_hostname = str(rrset.name).lower()
 
-                    # Store this glue record in our NS_IP_MAP for later
-                    if ns_hostname not in NS_IP_MAP:
-                        NS_IP_MAP[ns_hostname] = []
-                    if ns_ip not in NS_IP_MAP[ns_hostname]:
-                        NS_IP_MAP[ns_hostname].append(ns_ip)
+            # Store this glue record in our NS_IP_MAP for later
+            if ns_hostname not in NS_IP_MAP:
+                NS_IP_MAP[ns_hostname] = []
+            if ns_ip not in NS_IP_MAP[ns_hostname]:
+                NS_IP_MAP[ns_hostname].append(ns_ip)
 
-                    ns_hostnames_with_ip.append(str(rrset.name).lower())
-                    return_dict['additional_ns'].append(
-                        {
-                            'ns_ip': ns_ip,
-                            'ttl': int(rrset.ttl),
-                            'ns_hostname': ns_hostname,
-                        },
-                    )
+            ns_hostnames_with_ip.append(str(rrset.name).lower())
+            return_dict['additional_ns'].append(
+                {
+                    'ns_ip': ns_ip,
+                    'ttl': int(rrset.ttl),
+                    'ns_hostname': ns_hostname,
+                },
+            )
 
-                    # If this was an authoratative answer we need to save that for graphing.
-                    if (
-                        is_authoritative(return_dict['flags'])
-                        and
-                        ns_hostname not in AUTHORITATIVE_NS_LIST
-                    ):
-                        AUTHORITATIVE_NS_LIST.append(ns_hostname)
+            # If this was an authoritative answer we need to save that for graphing.
+            if (
+                is_authoritative(return_dict['flags'])
+                and
+                ns_hostname not in AUTHORITATIVE_NS_LIST
+            ):
+                AUTHORITATIVE_NS_LIST.append(ns_hostname)
 
-    # TODO: DRY this up somehow vvv
-
-    # AUTHORITY section of NS answer
-    for rrset in results.response.authority:
-        if rrset.rdtype == 2:
+    for section_of_NS_answer, corresponding_key in (
+        (
+            results.response.authority,
+            'authority_ns',
+        ),
+        (
+            results.response.answer,
+            'answer_ns',
+        ),
+    ):
+        for rrset in section_of_NS_answer:
+            if rrset.rdtype != 2:
+                continue
             for rrset_value in rrset.items:
                 ns_hostname = str(rrset_value).lower()
                 # Add this to our NS_IP_MAP as an empty entry
@@ -281,56 +289,15 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
                 if ns_ip:
                     ns_dict['ns_ip'] = ns_ip
 
-                return_dict['authority_ns'].append(ns_dict)
+                return_dict[corresponding_key].append(ns_dict)
 
-                # If this was an authoratative answer we need to save that for graphing.
+                # If this was an authoritative answer we need to save that for graphing.
                 if (
                     is_authoritative(return_dict['flags'])
                     and
                     ns_hostname not in AUTHORITATIVE_NS_LIST
                 ):
                     AUTHORITATIVE_NS_LIST.append(ns_hostname)
-
-    # ANSWER section of NS answer
-    for rrset in results.response.answer:
-        if rrset.rdtype == 2:
-            for rrset_value in rrset.items:
-                ns_hostname = str(rrset_value).lower()
-                # Add this to our NS_IP_MAP as an empty entry
-                if ns_hostname not in NS_IP_MAP:
-                    NS_IP_MAP[ns_hostname] = []
-
-                ns_dict = {
-                    'ns_hostname': ns_hostname,
-                    'ttl': int(rrset.ttl),
-                    'hostname': str(rrset.name).lower(),
-                }
-
-                # Since NS results sometimes won't have a glue record we will have to retrieve it..
-                # First check out own DNS cache
-                # If that fails then just use our resolver to get the IP
-                ns_ip = False
-
-                if len(NS_IP_MAP[ns_hostname]) == 0:
-                    NS_IP_MAP[ns_hostname] = get_hostname_ips(ns_hostname)
-
-                if len(NS_IP_MAP[ns_hostname]) > 0:
-                    ns_ip = NS_IP_MAP[ns_hostname][0]
-
-                if ns_ip:
-                    ns_dict['ns_ip'] = ns_ip
-
-                return_dict['answer_ns'].append(ns_dict)
-
-                # If this was an authoratative answer we need to save that for graphing.
-                if (
-                    is_authoritative(return_dict['flags'])
-                    and
-                    ns_hostname not in AUTHORITATIVE_NS_LIST
-                ):
-                    AUTHORITATIVE_NS_LIST.append(ns_hostname)
-
-    # TODO: DRY this up somehow ^^^
 
     return return_dict
 
