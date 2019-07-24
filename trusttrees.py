@@ -10,6 +10,7 @@ import time
 
 import dns.flags
 import dns.rcode
+import dns.rdatatype
 import dns.resolver
 import pygraphviz as pgv
 import tldextract
@@ -215,7 +216,7 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
     # ADDITIONAL section of NS answer
     ns_hostnames_with_ip = []
     for rrset in results.response.additional:
-        if rrset.rdtype != 2:
+        if rrset.rdtype != dns.rdatatype.NS:
             continue
         for rrset_value in rrset.items:
             if (
@@ -261,7 +262,7 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
         ),
     ):
         for rrset in section_of_NS_answer:
-            if rrset.rdtype != 2:
+            if rrset.rdtype != dns.rdatatype.NS:
                 continue
             for rrset_value in rrset.items:
                 ns_hostname = str(rrset_value).lower()
