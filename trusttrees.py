@@ -567,6 +567,7 @@ if __name__ == '__main__':
         '--export-formats',
         dest='export_formats',
         help='Comma-seperated export formats, e.g: -x png,pdf',
+        default='png',
     )
     args = parser.parse_args()
 
@@ -579,18 +580,14 @@ if __name__ == '__main__':
 
     enumerate_nameservers(target_hostname)
 
+    export_formats = [
+        extension.strip()
+        for extension in
+        args.export_formats.split(',')
+    ]
+    output_graph_file = './output/{}_trust_tree_graph.'.format(target_hostname)
     # Render graph image
     grapher = pgv.AGraph(draw_graph_from_cache(target_hostname))
-
-    output_graph_file = './output/' + target_hostname + '_trust_tree_graph.'
-
-    export_formats = []
-    if args.export_formats:
-        export_parts = args.export_formats.split(',')
-        for part in export_parts:
-            export_formats.append(part.strip())
-    else:
-        export_formats.append('png')
 
     for export_format in export_formats:
         file_name = output_graph_file + export_format
