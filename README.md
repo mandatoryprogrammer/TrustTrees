@@ -1,3 +1,7 @@
+[![PyPI version](https://badge.fury.io/py/TrustTrees.svg)](https://badge.fury.io/py/TrustTrees)
+[![AMF](https://img.shields.io/badge/Donate-Charity-orange.svg)](https://www.againstmalaria.com/donation.aspx)
+
+
 # TrustTrees
 ## *A Tool for DNS Delegation Trust Graphing*
 
