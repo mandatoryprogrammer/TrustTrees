@@ -1,5 +1,5 @@
 [![PyPI version](https://badge.fury.io/py/TrustTrees.svg)](https://badge.fury.io/py/TrustTrees)
-[![AMF](https://img.shields.io/badge/Donate-Charity-orange.svg)](https://www.againstmalaria.com/donation.aspx)
+[![Tor](https://img.shields.io/badge/Donate-Tor-orange)](https://donate.torproject.org/)
 
 
 # TrustTrees
@@ -10,9 +10,16 @@ TrustTrees is a script to recursively follow all the possible delegation paths f
 
 The purpose of this tool is to allow domain owners to verify that their domain's DNS is set up properly and is not vulnerable.
 
+Installation
+------------
+``` {.sourceCode .bash}
+$ pip install TrustTrees
+✨🍰✨
+```
+
 ## Example Usage:
 ```
-(env)bash-3.2$ ./trusttrees.py --target example.com --open
+(env)bash-3.2$ trusttrees.py --target example.com --open
 
   ______                __ ______
  /_  __/______  _______/ //_  __/_______  ___  _____
@@ -67,7 +74,7 @@ The above graph is a good example of a domain with many DNS errors in its delega
 
 ## Command-Line Options
 ```sh
-(env)bash-3.2$ ./trusttrees.py --help
+(env)bash-3.2$ trusttrees.py --help
 usage: trusttrees.py [-h] -t TARGET_HOSTNAME [-o] [-dc DOMAIN_CHECK]
                      [-x EXPORT_FORMATS]
 
