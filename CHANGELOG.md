@@ -31,6 +31,10 @@ If you love `TrustTrees`, please star our project on GitHub to show your support
 
 - [Added support for Gandi API V5 keys](https://github.com/mandatoryprogrammer/TrustTrees/commit/76e5813c1f9d2baa39e4a6fd78e2c60073d2e87e) (thanks [@robdollard], [@kalou], [@davidnewhall])
 
+#### :boom: Breaking Changes
+
+- [Replaced the `--domain-check` option with `--gandi-api-v4-key`](https://github.com/mandatoryprogrammer/TrustTrees/commit/76e5813c1f9d2baa39e4a6fd78e2c60073d2e87e)
+
 #### :snake: Miscellaneous
 
 - Refactored `trusttrees.py` ([#13])
