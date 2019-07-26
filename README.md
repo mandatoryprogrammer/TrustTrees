@@ -76,8 +76,9 @@ The above graph is a good example of a domain with many DNS errors in its delega
 ## Command-Line Options
 ```sh
 (env)bash-3.2$ trusttrees.py --help
-usage: trusttrees.py [-h] -t TARGET_HOSTNAME [-o] [-dc DOMAIN_CHECK]
-                     [-x EXPORT_FORMATS]
+usage: trusttrees.py [-h] -t TARGET_HOSTNAME [-o]
+                     [--gandi-api-v4-key GANDI_API_V4_KEY]
+                     [--gandi-api-v5-key GANDI_API_V5_KEY] [-x EXPORT_FORMATS]
 
 Graph out a domain's DNS delegation chain and trust trees!
 
@@ -86,9 +87,10 @@ optional arguments:
   -t TARGET_HOSTNAME, --target TARGET_HOSTNAME
                         Target hostname to generate delegation graph from.
   -o, --open            Open the generated graph once run.
-  -dc DOMAIN_CHECK, --domain-check DOMAIN_CHECK
-                        Check if nameserver base domains are expired. Specify
-                        a Gandi API key.
+  --gandi-api-v4-key GANDI_API_V4_KEY
+                        Gandi API V4 key to be used for domain checking.
+  --gandi-api-v5-key GANDI_API_V5_KEY
+                        Gandi API V5 key to be used for domain checking.
   -x EXPORT_FORMATS, --export-formats EXPORT_FORMATS
                         Comma-seperated export formats, e.g: -x png,pdf
 ```
