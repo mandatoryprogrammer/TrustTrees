@@ -1,4 +1,5 @@
 [![PyPI version](https://badge.fury.io/py/TrustTrees.svg)](https://badge.fury.io/py/TrustTrees)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg)](https://github.com/mandatoryprogrammer/TrustTrees/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+)
 [![Tor](https://img.shields.io/badge/Donate-Tor-orange)](https://donate.torproject.org/)
 
 
