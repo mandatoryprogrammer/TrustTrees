@@ -1,5 +1,8 @@
 env/*
 graphs/*
+
 .DS_Store
-*.png
+
 *.dot
+*.png
+*.pyc
