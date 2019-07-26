@@ -88,9 +88,11 @@ optional arguments:
                         Target hostname to generate delegation graph from.
   -o, --open            Open the generated graph once run.
   --gandi-api-v4-key GANDI_API_V4_KEY
-                        Gandi API V4 key to be used for domain checking.
+                        Gandi API V4 key for checking if nameserver base
+                        domains are registerable.
   --gandi-api-v5-key GANDI_API_V5_KEY
-                        Gandi API V5 key to be used for domain checking.
+                        Gandi API V5 key for checking if nameserver base
+                        domains are registerable.
   -x EXPORT_FORMATS, --export-formats EXPORT_FORMATS
                         Comma-seperated export formats, e.g: -x png,pdf
 ```

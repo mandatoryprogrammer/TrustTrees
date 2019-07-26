@@ -690,13 +690,13 @@ if __name__ == '__main__':
     parser.add_argument(
         '--gandi-api-v4-key',
         dest='gandi_api_v4_key',
-        help='Gandi API V4 key to be used for domain checking.',
+        help='Gandi API V4 key for checking if nameserver base domains are registerable.',
         metavar='GANDI_API_V4_KEY',
     )
     parser.add_argument(
         '--gandi-api-v5-key',
         dest='gandi_api_v5_key',
-        help='Gandi API V5 key to be used for domain checking.',
+        help='Gandi API V5 key for checking if nameserver base domains are registerable.',
         metavar='GANDI_API_V5_KEY',
     )
     parser.add_argument(
