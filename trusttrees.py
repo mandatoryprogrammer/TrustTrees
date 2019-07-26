@@ -14,11 +14,13 @@ import dns.rcode
 import dns.rdatatype
 import dns.resolver
 import pygraphviz
+import requests
 import tldextract
 import xmlrpclib
 
-gandi_api = xmlrpclib.ServerProxy('https://rpc.gandi.net/xmlrpc/')
-GANDI_API_KEY = ''
+gandi_api_v4 = xmlrpclib.ServerProxy(uri='https://rpc.gandi.net/xmlrpc/')
+GANDI_API_V4_KEY = ''
+GANDI_API_V5_KEY = ''
 
 BLUE = '#0099ff'
 GRAY = '#a3a3a3'
@@ -128,7 +130,62 @@ This is used in graphing to show where the flow breaks.
 QUERY_ERROR_LIST = []
 
 
+def can_register_with_gandi_api_v4(input_domain):
+    """
+    :returns: bool
+    if input_domain is available for registration
+    """
+    for _ in range(10):
+        result = gandi_api_v4.domain.available(
+            GANDI_API_V4_KEY,
+            [input_domain],
+        )
+        if result[input_domain] != 'pending':
+            break
+        time.sleep(1)
+
+    return result[input_domain] == 'available'
+
+
+def can_register_with_gandi_api_v5(input_domain):
+    """
+    For more information, please see
+    https://api.gandi.net/docs/domains/
+
+    :returns: bool
+    if input_domain is available for registration
+    """
+    for _ in range(10):
+        response = requests.get(
+            url='https://api.gandi.net/v5/domain/check',
+            params={
+                'name': input_domain,
+            },
+            headers={
+                'Authorization': 'Apikey {}'.format(GANDI_API_V5_KEY),
+            },
+        )
+        assert response.status_code == 200
+
+        if 'products' not in response.json():
+            return False
+        assert len(response.json()['products']) == 1
+
+        status = response.json()['products'][0]['status']
+
+        if status != 'pending':
+            break
+        time.sleep(1)
+
+    return status == 'available'
+
+
 def is_domain_available(input_domain):
+    """
+    Called if Gandi API key is provided.
+
+    :returns: bool
+    """
     if input_domain.endswith('.'):
         input_domain = input_domain[:-1]
 
@@ -137,14 +194,10 @@ def is_domain_available(input_domain):
 
     print('[ STATUS ] Checking if ' + input_domain + ' is available...')
 
-    result = gandi_api.domain.available(GANDI_API_KEY, [input_domain])
-    counter = 0
-    while result[input_domain] == 'pending' and counter < 10:
-        counter += 1
-        time.sleep(1)
-        result = gandi_api.domain.available(GANDI_API_KEY, [input_domain])
-
-    domain_available = result[input_domain] == 'available'
+    if GANDI_API_V4_KEY:
+        domain_available = can_register_with_gandi_api_v4(input_domain)
+    else:
+        domain_available = can_register_with_gandi_api_v5(input_domain)
 
     DOMAIN_AVAILABILITY_CACHE[input_domain] = domain_available
 
@@ -152,8 +205,20 @@ def is_domain_available(input_domain):
 
 
 def get_base_domain(input_hostname):
+    """
+    :type input_hostname: str
+    e.g.
+        "ns2.foo.com."
+
+    :returns:string
+    e.g.
+        foo.com.
+    """
     tldexact_parts = tldextract.extract('http://' + input_hostname)
-    return tldexact_parts.domain + '.' + tldexact_parts.suffix + '.'
+    return '{}.{}.'.format(
+        tldexact_parts.domain,
+        tldexact_parts.suffix,
+    )
 
 
 def get_random_root_ns_set():
@@ -516,11 +581,15 @@ def get_graph_data_for_ns_result(ns_list, ns_result):
 
         base_domain = get_base_domain(ns_hostname)
         if (
-            GANDI_API_KEY
+            (
+                GANDI_API_V4_KEY
+                or
+                GANDI_API_V5_KEY
+            )
             and
             is_domain_available(base_domain)
         ):
-            node_name = "Base domain '" + base_domain + "' unregisted!"
+            node_name = "Base domain '" + base_domain + "' unregistered!"
             potential_edge = ns_hostname + '->' + node_name
             if potential_edge not in PREVIOUS_EDGES:
                 PREVIOUS_EDGES.append(potential_edge)
@@ -528,7 +597,7 @@ def get_graph_data_for_ns_result(ns_list, ns_result):
                     '"{}" -> "{}";\n'.format(
                         ns_hostname,
                         node_name,
-                    ),
+                    )
                 )
                 return_graph_data_string += (
                     '"{}"[shape=octagon, style=filled, fillcolor="{}"];\n'.format(
@@ -584,7 +653,6 @@ def try_to_get_first_ip_for_hostname(hostname):
         )
         if answer.rrset:
             return str(answer.rrset[0])
-    # TODO: Catch specific exception(s)
     except Exception:
         pass
     return ''
@@ -620,11 +688,16 @@ if __name__ == '__main__':
         action='store_true',
     )
     parser.add_argument(
-        '-dc',
-        '--domain-check',
-        dest='domain_check',
-        help='Check if nameserver base domains are expired. Specify a Gandi API key.',
-        metavar='GANDI_API_KEY',
+        '--gandi-api-v4-key',
+        dest='gandi_api_v4_key',
+        help='Gandi API V4 key to be used for domain checking.',
+        metavar='GANDI_API_V4_KEY',
+    )
+    parser.add_argument(
+        '--gandi-api-v5-key',
+        dest='gandi_api_v5_key',
+        help='Gandi API V5 key to be used for domain checking.',
+        metavar='GANDI_API_V5_KEY',
     )
     parser.add_argument(
         '-x',
@@ -637,8 +710,10 @@ if __name__ == '__main__':
 
     print_logo()
 
-    if args.domain_check:
-        GANDI_API_KEY = args.domain_check
+    if args.gandi_api_v4_key:
+        GANDI_API_V4_KEY = args.gandi_api_v4_key
+    elif args.gandi_api_v5_key:
+        GANDI_API_V5_KEY = args.gandi_api_v5_key
 
     target_hostname = args.target_hostname
 
