@@ -7,8 +7,11 @@ __VERSION__ = '2.0.0'
 
 def requirements():
     with open('requirements.txt') as reqs:
-        # [:-1] to skip the EOF newline
-        install_req = [line for line in reqs.read().split('\n')][:-1]
+        install_req = [
+            line
+            for line in
+            reqs.read().split('\n')
+        ][:-1]  # skip the EOF newline
     return install_req
 
 

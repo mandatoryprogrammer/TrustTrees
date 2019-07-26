@@ -1,0 +1,2 @@
+foo.com
+bar.com

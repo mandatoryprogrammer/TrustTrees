@@ -658,6 +658,14 @@ def try_to_get_first_ip_for_hostname(hostname):
     return ''
 
 
+def create_output_dir():
+    try:
+        os.mkdir('output')
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
 def print_logo():
     print("""
       ______                __ ______
@@ -673,13 +681,21 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Graph out a domain's DNS delegation chain and trust trees!",
     )
-    parser.add_argument(
+
+    required_group = parser.add_mutually_exclusive_group(required=True)
+    required_group.add_argument(
         '-t',
         '--target',
         dest='target_hostname',
         help='Target hostname to generate delegation graph from.',
-        required=True,
     )
+    required_group.add_argument(
+        '-l',
+        '--target-list',
+        dest='target_hostnames_list',
+        help='Input file with a list of target hostnames.',
+    )
+
     parser.add_argument(
         '-o',
         '--open',
@@ -709,37 +725,44 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     print_logo()
+    create_output_dir()
 
     if args.gandi_api_v4_key:
         GANDI_API_V4_KEY = args.gandi_api_v4_key
     elif args.gandi_api_v5_key:
         GANDI_API_V5_KEY = args.gandi_api_v5_key
 
-    target_hostname = args.target_hostname
+    if args.target_hostname:
+        target_hostnames = [args.target_hostname]
+    else:
+        targets = open(args.target_hostnames_list)
+        target_hostnames = [
+            hostname
+            for hostname in
+            targets.read().split('\n')
+        ][:-1]  # skip the EOF newline
 
-    enumerate_nameservers(target_hostname)
+    for target_hostname in target_hostnames:
+        enumerate_nameservers(target_hostname)
 
-    export_formats = [
-        extension.strip()
-        for extension in
-        args.export_formats.split(',')
-    ]
-    output_graph_file = './output/{}_trust_tree_graph.'.format(target_hostname)
-    # Render graph image
-    grapher = pygraphviz.AGraph(
-        draw_graph_from_cache(target_hostname),
-    )
+        export_formats = [
+            extension.strip()
+            for extension in
+            args.export_formats.split(',')
+        ]
+        output_graph_file = './output/{}_trust_tree_graph.'.format(
+            target_hostname,
+        )
+        # Render graph image
+        grapher = pygraphviz.AGraph(
+            draw_graph_from_cache(target_hostname),
+        )
 
-    for export_format in export_formats:
-        file_name = output_graph_file + export_format
-        try:
-            os.mkdir('output')
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-        grapher.draw(file_name, prog='dot')
-        if args.open:
-            print('[ STATUS ] Opening final graph...')
-            subprocess.call(['open', file_name])
+        for export_format in export_formats:
+            file_name = output_graph_file + export_format
+            grapher.draw(file_name, prog='dot')
+            if args.open:
+                print('[ STATUS ] Opening final graph...')
+                subprocess.call(['open', file_name])
 
-    print('[ SUCCESS ] Finished generating graph!')
+        print('[ SUCCESS ] Finished generating graph!')
