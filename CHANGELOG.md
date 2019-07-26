@@ -24,12 +24,21 @@ If you love `TrustTrees`, please star our project on GitHub to show your support
 [@xxxx]: https://github.com/xxxx
 -->
 
+### v2.0.1
+##### July 26th, 2019
+
+#### :tada: New Features
+
+- [Added a new `-l`/`--target-list` option](https://github.com/mandatoryprogrammer/TrustTrees/commit/b3dc983e642e0a47d28de6161a61a8706f18bf34) (thanks [@AlexeyStolyarov] and [@thefinn93])
+
+
+
 ### v2.0.0
 ##### July 25th, 2019
 
 #### :tada: New Features
 
-- [Added support for Gandi API V5 keys](https://github.com/mandatoryprogrammer/TrustTrees/commit/76e5813c1f9d2baa39e4a6fd78e2c60073d2e87e) (thanks [@robdollard], [@kalou], [@davidnewhall])
+- [Added support for Gandi API V5 keys](https://github.com/mandatoryprogrammer/TrustTrees/commit/76e5813c1f9d2baa39e4a6fd78e2c60073d2e87e) (thanks [@robdollard], [@kalou] and [@davidnewhall])
 
 #### :boom: Breaking Changes
 
