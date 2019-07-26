@@ -24,6 +24,24 @@ If you love `TrustTrees`, please star our project on GitHub to show your support
 [@xxxx]: https://github.com/xxxx
 -->
 
+### v2.0.0
+##### July 25th, 2019
+
+#### :tada: New Features
+
+- [Added support for Gandi API V5 keys](https://github.com/mandatoryprogrammer/TrustTrees/commit/76e5813c1f9d2baa39e4a6fd78e2c60073d2e87e) (thanks [@robdollard], [@kalou], [@davidnewhall])
+
+#### :snake: Miscellaneous
+
+- Refactored `trusttrees.py` ([#13])
+
+[#13]: https://github.com/mandatoryprogrammer/TrustTrees/pull/13
+[@robdollard]: https://github.com/robdollard
+[@kalou]: https://github.com/kalou
+[@davidnewhall]: https://github.com/davidnewhall
+
+
+
 ### v1.0.0
 ##### July 24th, 2019
 
