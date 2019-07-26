@@ -31,6 +31,8 @@ If you love `TrustTrees`, please star our project on GitHub to show your support
 
 - [Added a new `-l`/`--target-list` option](https://github.com/mandatoryprogrammer/TrustTrees/commit/b3dc983e642e0a47d28de6161a61a8706f18bf34) (thanks [@AlexeyStolyarov] and [@thefinn93])
 
+[@thefinn93]: https://github.com/thefinn93
+
 
 
 ### v2.0.0
@@ -67,11 +69,13 @@ If you love `TrustTrees`, please star our project on GitHub to show your support
 # Special thanks to our awesome contributors! :clap:
 
 - [@alexmerkel]
+- [@AlexeyStolyarov]
 - [@cclauss]
 - [@iepathos]
 - [@zard777]
 
 [@alexmerkel]: https://github.com/alexmerkel
+[@AlexeyStolyarov]: https://github.com/AlexeyStolyarov
 [@cclauss]: https://github.com/cclauss
 [@iepathos]: https://github.com/iepathos
 [@zard777]: https://github.com/zard777
