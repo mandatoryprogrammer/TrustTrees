@@ -76,7 +76,7 @@ The above graph is a good example of a domain with many DNS errors in its delega
 ## Command-Line Options
 ```sh
 (env)bash-3.2$ trusttrees.py --help
-usage: trusttrees.py [-h] -t TARGET_HOSTNAME [-o]
+usage: trusttrees.py [-h] (-t TARGET_HOSTNAME | -l TARGET_HOSTNAMES_LIST) [-o]
                      [--gandi-api-v4-key GANDI_API_V4_KEY]
                      [--gandi-api-v5-key GANDI_API_V5_KEY] [-x EXPORT_FORMATS]
 
@@ -86,6 +86,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -t TARGET_HOSTNAME, --target TARGET_HOSTNAME
                         Target hostname to generate delegation graph from.
+  -l TARGET_HOSTNAMES_LIST, --target-list TARGET_HOSTNAMES_LIST
+                        Input file with a list of target hostnames.
   -o, --open            Open the generated graph once run.
   --gandi-api-v4-key GANDI_API_V4_KEY
                         Gandi API V4 key for checking if nameserver base
