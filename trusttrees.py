@@ -130,54 +130,61 @@ This is used in graphing to show where the flow breaks.
 QUERY_ERROR_LIST = []
 
 
+def auto_retry(registar_function):
+    def wrapper_of_registar_function(input_domain):
+        for _ in range(10):
+            status = registar_function(input_domain)
+            if status != 'pending':
+                break
+            time.sleep(1)
+
+        return status == 'available'
+
+    return wrapper_of_registar_function
+
+
+@auto_retry
 def can_register_with_gandi_api_v4(input_domain):
     """
     :returns: bool
-    if input_domain is available for registration
+    availability status returned from the API
     """
-    for _ in range(10):
-        result = gandi_api_v4.domain.available(
-            GANDI_API_V4_KEY,
-            [input_domain],
-        )
-        if result[input_domain] != 'pending':
-            break
-        time.sleep(1)
-
-    return result[input_domain] == 'available'
+    status = gandi_api_v4.domain.available(
+        GANDI_API_V4_KEY,
+        [input_domain],
+    )[input_domain]
+    return status
 
 
+@auto_retry
 def can_register_with_gandi_api_v5(input_domain):
     """
     For more information, please see
     https://api.gandi.net/docs/domains/
 
-    :returns: bool
-    if input_domain is available for registration
+    :returns: string
+    availability status returned from the API
     """
-    for _ in range(10):
-        response = requests.get(
-            url='https://api.gandi.net/v5/domain/check',
-            params={
-                'name': input_domain,
-            },
-            headers={
-                'Authorization': 'Apikey {}'.format(GANDI_API_V5_KEY),
-            },
-        )
-        assert response.status_code == 200
+    response = requests.get(
+        url='https://api.gandi.net/v5/domain/check',
+        params={
+            'name': input_domain,
+        },
+        headers={
+            'Authorization': 'Apikey {}'.format(GANDI_API_V5_KEY),
+        },
+    )
+    assert response.status_code == 200
 
-        if 'products' not in response.json():
-            return False
-        assert len(response.json()['products']) == 1
+    # I do not know why Gandi does this
+    if 'products' not in response.json():
+        return 'not_available'
 
-        status = response.json()['products'][0]['status']
+    assert len(response.json()['products']) == 1
 
-        if status != 'pending':
-            break
-        time.sleep(1)
+    status = response.json()['products'][0]['status']
 
-    return status == 'available'
+    return status
 
 
 def is_domain_available(input_domain):
