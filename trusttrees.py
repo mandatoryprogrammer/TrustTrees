@@ -634,7 +634,7 @@ def get_graph_data_for_ns_result(ns_list, ns_result):
                 '[label=<<i>{}?</i><br /><font point-size="10">{}</font>>];\n'.format(
                     query_error['hostname'],
                     query_error['error'],
-                ),
+                )
             )
             return_graph_data_string += (
                 '"{}" [shape=octagon, style=filled, fillcolor="{}"];\n'.format(
