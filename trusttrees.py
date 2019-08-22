@@ -195,7 +195,7 @@ def can_register_with_aws_boto3(input_domain):
     availability status returned from the API
     """
     client = boto3.client('route53domains', region_name='us-east-1') # This is the only region available
-    status = boto3.check_domain_availability(
+    status = client.check_domain_availability(
         DomainName=input_domain,
     )['Availability']
     return status.lower()
