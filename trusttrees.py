@@ -9,6 +9,7 @@ import subprocess
 import time
 from collections import defaultdict
 
+import boto3
 import dns.flags
 import dns.rcode
 import dns.rdatatype
@@ -21,6 +22,7 @@ import xmlrpclib
 gandi_api_v4 = xmlrpclib.ServerProxy(uri='https://rpc.gandi.net/xmlrpc/')
 GANDI_API_V4_KEY = ''
 GANDI_API_V5_KEY = ''
+USE_AWS = False
 
 BLUE = '#0099ff'
 GRAY = '#a3a3a3'
@@ -138,7 +140,7 @@ def auto_retry(registar_function):
                 break
             time.sleep(1)
 
-        return status == 'available'
+        return status.startswith('available')
 
     return wrapper_of_registar_function
 
@@ -146,7 +148,7 @@ def auto_retry(registar_function):
 @auto_retry
 def can_register_with_gandi_api_v4(input_domain):
     """
-    :returns: bool
+    :returns: string
     availability status returned from the API
     """
     status = gandi_api_v4.domain.available(
@@ -186,10 +188,21 @@ def can_register_with_gandi_api_v5(input_domain):
 
     return status
 
+@auto_retry
+def can_register_with_aws_boto3(input_domain):
+    """
+    :returns: string
+    availability status returned from the API
+    """
+    client = boto3.client('route53domains', region_name='us-east-1') # This is the only region available
+    status = boto3.check_domain_availability(
+        DomainName=input_domain,
+    )['Availability']
+    return status.lower()
 
 def is_domain_available(input_domain):
     """
-    Called if Gandi API key is provided.
+    Called if Gandi API key/AWS key is provided.
 
     :returns: bool
     """
@@ -203,8 +216,10 @@ def is_domain_available(input_domain):
 
     if GANDI_API_V4_KEY:
         domain_available = can_register_with_gandi_api_v4(input_domain)
-    else:
+    elif GANDI_API_V5_KEY:
         domain_available = can_register_with_gandi_api_v5(input_domain)
+    else:
+        domain_available = can_register_with_aws_boto3(input_domain)
 
     DOMAIN_AVAILABILITY_CACHE[input_domain] = domain_available
 
@@ -592,6 +607,8 @@ def get_graph_data_for_ns_result(ns_list, ns_result):
                 GANDI_API_V4_KEY
                 or
                 GANDI_API_V5_KEY
+                or
+                USE_AWS
             )
             and
             is_domain_available(base_domain)
@@ -723,6 +740,12 @@ if __name__ == '__main__':
         metavar='GANDI_API_V5_KEY',
     )
     parser.add_argument(
+        '--use-aws-credentials',
+        dest='use_aws',
+        help='Use aws credentials for checking if nameserver base domains are registerable.',
+        action='store_true',
+    )
+    parser.add_argument(
         '-x',
         '--export-formats',
         dest='export_formats',
@@ -738,6 +761,8 @@ if __name__ == '__main__':
         GANDI_API_V4_KEY = args.gandi_api_v4_key
     elif args.gandi_api_v5_key:
         GANDI_API_V5_KEY = args.gandi_api_v5_key
+    elif args.use_aws:
+        USE_AWS = True
 
     if args.target_hostname:
         target_hostnames = [args.target_hostname]
