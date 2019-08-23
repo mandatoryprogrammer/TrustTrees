@@ -23,7 +23,7 @@ import xmlrpclib
 gandi_api_v4 = xmlrpclib.ServerProxy(uri='https://rpc.gandi.net/xmlrpc/')
 GANDI_API_V4_KEY = ''
 GANDI_API_V5_KEY = ''
-AWS_CRED_FILE = ''
+AWS_CREDS_FILE = ''
 
 BLUE = '#0099ff'
 GRAY = '#a3a3a3'
@@ -195,13 +195,13 @@ def can_register_with_aws_boto3(input_domain):
     :returns: string
     availability status returned from the API
     """
-    with open(AWS_CRED_FILE, 'r') as f:
+    with open(AWS_CREDS_FILE, 'r') as f:
         creds = json.load(f)
-        access_key = creds['accessKeyId']
     client = boto3.client('route53domains',
-             aws_access_key_id=creds['accessKeyId'],
-             aws_secret_access_key=creds['secretAccessKey'],
-             region_name='us-east-1') # This is the only region available
+        aws_access_key_id=creds['accessKeyId'],
+        aws_secret_access_key=creds['secretAccessKey'],
+        region_name='us-east-1',  # Only region available
+    )
     status = client.check_domain_availability(
         DomainName=input_domain,
     )['Availability']
@@ -615,7 +615,7 @@ def get_graph_data_for_ns_result(ns_list, ns_result):
                 or
                 GANDI_API_V5_KEY
                 or
-                AWS_CRED_FILE
+                AWS_CREDS_FILE
             )
             and
             is_domain_available(base_domain)
@@ -747,10 +747,10 @@ if __name__ == '__main__':
         metavar='GANDI_API_V5_KEY',
     )
     parser.add_argument(
-        '--use-aws-credentials',
-        dest='aws_filepath',
+        '--aws-credentials',
+        dest='aws_creds_filepath',
         help='Use AWS credentials from a json file for checking if nameserver base domains are registerable.',
-        metavar='AWS_CRED_FILE',
+        metavar='AWS_CREDS_FILE',
     )
     parser.add_argument(
         '-x',
@@ -768,8 +768,8 @@ if __name__ == '__main__':
         GANDI_API_V4_KEY = args.gandi_api_v4_key
     elif args.gandi_api_v5_key:
         GANDI_API_V5_KEY = args.gandi_api_v5_key
-    elif args.aws_filepath:
-        AWS_CRED_FILE = args.aws_filepath
+    elif args.aws_creds_filepath:
+        AWS_CREDS_FILE = args.aws_creds_filepath
 
     if args.target_hostname:
         target_hostnames = [args.target_hostname]
