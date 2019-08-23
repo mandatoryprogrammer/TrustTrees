@@ -22,7 +22,7 @@ import xmlrpclib
 gandi_api_v4 = xmlrpclib.ServerProxy(uri='https://rpc.gandi.net/xmlrpc/')
 GANDI_API_V4_KEY = ''
 GANDI_API_V5_KEY = ''
-USE_AWS = False
+AWS_CRED_FILE = ''
 
 BLUE = '#0099ff'
 GRAY = '#a3a3a3'
@@ -194,7 +194,13 @@ def can_register_with_aws_boto3(input_domain):
     :returns: string
     availability status returned from the API
     """
-    client = boto3.client('route53domains', region_name='us-east-1') # This is the only region available
+    with open(AWS_CRED_FILE, 'r') as f:
+        creds = json.load(f)
+        access_key = creds['accessKeyId']
+    client = boto3.client('route53domains',
+             aws_access_key_id=creds['accessKeyId'],
+             aws_secret_access_key=creds['secretAccessKey'],
+             region_name='us-east-1') # This is the only region available
     status = client.check_domain_availability(
         DomainName=input_domain,
     )['Availability']
@@ -608,7 +614,7 @@ def get_graph_data_for_ns_result(ns_list, ns_result):
                 or
                 GANDI_API_V5_KEY
                 or
-                USE_AWS
+                AWS_CRED_FILE
             )
             and
             is_domain_available(base_domain)
@@ -741,9 +747,9 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--use-aws-credentials',
-        dest='use_aws',
-        help='Use aws credentials for checking if nameserver base domains are registerable.',
-        action='store_true',
+        dest='aws_filepath',
+        help='Use AWS credentials from a json file for checking if nameserver base domains are registerable.',
+        metavar='AWS_CRED_FILE',
     )
     parser.add_argument(
         '-x',
@@ -761,8 +767,8 @@ if __name__ == '__main__':
         GANDI_API_V4_KEY = args.gandi_api_v4_key
     elif args.gandi_api_v5_key:
         GANDI_API_V5_KEY = args.gandi_api_v5_key
-    elif args.use_aws:
-        USE_AWS = True
+    elif args.aws_filepath:
+        AWS_CRED_FILE = args.aws_filepath
 
     if args.target_hostname:
         target_hostnames = [args.target_hostname]
