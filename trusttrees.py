@@ -14,6 +14,7 @@ import dns.flags
 import dns.rcode
 import dns.rdatatype
 import dns.resolver
+import json
 import pygraphviz
 import requests
 import tldextract
