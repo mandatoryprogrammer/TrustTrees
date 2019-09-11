@@ -779,7 +779,7 @@ if __name__ == '__main__':
             hostname
             for hostname in
             targets.read().split('\n')
-        ][:-1]  # skip the EOF newline
+        ][:-1]  # Skip the EOF newline
 
     for target_hostname in target_hostnames:
         enumerate_nameservers(target_hostname)

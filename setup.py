@@ -11,7 +11,7 @@ def requirements():
             line
             for line in
             reqs.read().split('\n')
-        ][:-1]  # skip the EOF newline
+        ][:-1]  # Skip the EOF newline
     return install_req
 
 
