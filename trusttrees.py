@@ -149,7 +149,7 @@ def auto_retry(registar_function):
 @auto_retry
 def can_register_with_gandi_api_v4(input_domain):
     """
-    :returns: string
+    :returns: lowercase string
     availability status returned from the API
     """
     status = gandi_api_v4.domain.available(
@@ -165,7 +165,7 @@ def can_register_with_gandi_api_v5(input_domain):
     For more information, please see
     https://api.gandi.net/docs/domains/
 
-    :returns: string
+    :returns: lowercase string
     availability status returned from the API
     """
     response = requests.get(
@@ -192,7 +192,7 @@ def can_register_with_gandi_api_v5(input_domain):
 @auto_retry
 def can_register_with_aws_boto3(input_domain):
     """
-    :returns: string
+    :returns: lowercase string
     availability status returned from the API
     """
     with open(AWS_CREDS_FILE, 'r') as f:
