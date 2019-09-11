@@ -18,9 +18,9 @@ import json
 import pygraphviz
 import requests
 import tldextract
-import xmlrpclib
+import xmlrpc.client
 
-gandi_api_v4 = xmlrpclib.ServerProxy(uri='https://rpc.gandi.net/xmlrpc/')
+gandi_api_v4 = xmlrpc.client.ServerProxy(uri='https://rpc.gandi.net/xmlrpc/')
 GANDI_API_V4_KEY = ''
 GANDI_API_V5_KEY = ''
 AWS_CREDS_FILE = ''
@@ -540,7 +540,7 @@ def draw_graph_from_cache(target_hostname):
         """.format(target_hostname)
     )
 
-    for cache_key, ns_result in MASTER_DNS_CACHE.iteritems():
+    for cache_key, ns_result in MASTER_DNS_CACHE.items():
         print("[ STATUS ] Building '" + cache_key + "'...")
         for section_of_NS_answer in (
             'additional_ns',
@@ -599,7 +599,7 @@ def get_graph_data_for_ns_result(ns_list, ns_result):
         )
 
     # Make all nameservers without any IPs red because they might be vulnerable
-    for ns_hostname, ns_hostname_ip in NS_IP_MAP.iteritems():
+    for ns_hostname, ns_hostname_ip in NS_IP_MAP.items():
         if not ns_hostname_ip:
             return_graph_data_string += (
                 '"{}" [shape=ellipse, style=filled, fillcolor="{}"];\n'.format(
@@ -674,7 +674,7 @@ def try_to_get_first_ip_for_hostname(hostname):
     """
     :returns: string
     e.g.
-        "1.2.3.4"
+        "1.2.3.4" or ""
     """
     try:
         answer = dns_query(
