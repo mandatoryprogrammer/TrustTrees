@@ -1,249 +1,45 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-import errno
-import json
-import os
 import secrets
 import subprocess
 import sys
-import time
-import xmlrpc.client
-from collections import defaultdict
 
-import boto3
 import dns.flags
 import dns.rcode
 import dns.rdatatype
 import dns.resolver
 import pygraphviz
-import requests
 import tldextract
 
-from .usage import parse_args
-
-
-gandi_api_v4 = xmlrpc.client.ServerProxy(uri='https://rpc.gandi.net/xmlrpc/')
-GANDI_API_V4_KEY = ''
-GANDI_API_V5_KEY = ''
-AWS_CREDS_FILE = ''
-
-BLUE = '#0099ff'
-GRAY = '#a3a3a3'
-RED = '#ff0000'
-ORANGE = '#ff7700'
-YELLOW = '#fff200'
-
-ROOT_SERVERS = (
-    {
-        'ip': '198.41.0.4',
-        'hostname': 'a.root-servers.net.',
-    },
-    {
-        'ip': '192.228.79.201',
-        'hostname': 'b.root-servers.net.',
-    },
-    {
-        'ip': '192.33.4.12',
-        'hostname': 'c.root-servers.net.',
-    },
-    {
-        'ip': '199.7.91.13',
-        'hostname': 'd.root-servers.net.',
-    },
-    {
-        'ip': '192.203.230.10',
-        'hostname': 'e.root-servers.net.',
-    },
-    {
-        'ip': '192.5.5.241',
-        'hostname': 'f.root-servers.net.',
-    },
-    {
-        'ip': '192.112.36.4',
-        'hostname': 'g.root-servers.net.',
-    },
-    {
-        'ip': '198.97.190.53',
-        'hostname': 'h.root-servers.net.',
-    },
-    {
-        'ip': '192.36.148.17',
-        'hostname': 'i.root-servers.net.',
-    },
-    {
-        'ip': '192.58.128.30',
-        'hostname': 'j.root-servers.net.',
-    },
-    {
-        'ip': '193.0.14.129',
-        'hostname': 'k.root-servers.net.',
-    },
-    {
-        'ip': '199.7.83.42',
-        'hostname': 'l.root-servers.net.',
-    },
-    {
-        'ip': '202.12.27.33',
-        'hostname': 'm.root-servers.net.',
-    },
+from .constants import (
+    BLUE,
+    DNS_WATCH_RESOLVER,
+    GRAY,
+    IPV6_ENABLED,
+    MAX_RECURSION_DEPTH,
+    ORANGE,
+    RED,
+    ROOT_SERVERS,
+    YELLOW,
 )
-
-DNS_WATCH_RESOLVER = '84.200.69.80'
-DOMAIN_AVAILABILITY_CACHE = {}
-IPV6_ENABLED = False
-MAX_RECURSION_DEPTH = 4
-PREVIOUS_EDGES = []
-
-"""
-Saved results of DNS queries, key format is the following:
-
-KEY = FQDN_QUERY_NAME|QUERY_TYPE|NS_TARGET_IP
-
-e.g.
-    "google.com.|ns|192.168.1.1"
-"""
-MASTER_DNS_CACHE = {}
-
-"""
-This creates an easy map of nameserver names to one of their IP addresses.
-
-It is used to check for nameservers without any IP addresses.
-
-e.g.
-    {
-        "ns1.example.com.": "192.168.1.1",
-        "ns2.example.com.": "",
-        ...
-    }
-"""
-NS_IP_MAP = defaultdict(str)
-
-"""
-A simple list of nameservers which were returned with the authoritative answer flag set.
-
-Used for graphing to make it clear where the flow of queries ends.
-
-We use a list instead of a set to preserve ordering slightly better.
-"""
-AUTHORITATIVE_NS_LIST = []
-
-"""
-A list of DNS errors returned whilst querying nameservers.
-
-This is used in graphing to show where the flow breaks.
-"""
-QUERY_ERROR_LIST = []
-
-
-def auto_retry(registar_function):
-    """
-    :type registar_function: function
-    Returns a lowercase availability status when given a domain
-
-    :returns: function
-    A wrapped registar_function that retries
-    """
-    def wrapper_of_registar_function(input_domain):
-        for _ in range(10):
-            status = registar_function(input_domain)
-            if status != 'pending':
-                break
-            time.sleep(1)
-
-        return status.startswith('available')
-
-    return wrapper_of_registar_function
-
-
-@auto_retry
-def can_register_with_gandi_api_v4(input_domain):
-    """
-    :returns: lowercase string
-    availability status returned from the API
-    """
-    status = gandi_api_v4.domain.available(
-        GANDI_API_V4_KEY,
-        [input_domain],
-    )[input_domain]
-    return status
-
-
-@auto_retry
-def can_register_with_gandi_api_v5(input_domain):
-    """
-    For more information, please see
-    https://api.gandi.net/docs/domains/
-
-    :returns: lowercase string
-    availability status returned from the API
-    """
-    response = requests.get(
-        url='https://api.gandi.net/v5/domain/check',
-        params={
-            'name': input_domain,
-        },
-        headers={
-            'Authorization': 'Apikey {}'.format(GANDI_API_V5_KEY),
-        },
-    )
-    assert response.status_code == 200
-
-    # I do not know why Gandi does this
-    if 'products' not in response.json():
-        return 'not_available'
-
-    assert len(response.json()['products']) == 1
-
-    status = response.json()['products'][0]['status']
-
-    return status
-
-
-@auto_retry
-def can_register_with_aws_boto3(input_domain):
-    """
-    :returns: lowercase string
-    availability status returned from the API
-    """
-    with open(AWS_CREDS_FILE, 'r') as f:
-        creds = json.load(f)
-    client = boto3.client(
-        'route53domains',
-        aws_access_key_id=creds['accessKeyId'],
-        aws_secret_access_key=creds['secretAccessKey'],
-        region_name='us-east-1',  # Only region available
-    )
-    status = client.check_domain_availability(
-        DomainName=input_domain,
-    )['Availability']
-    return status.lower()
-
-
-def is_domain_available(input_domain):
-    """
-    Called if Gandi API key/AWS key is provided.
-
-    :returns: bool
-    """
-    if input_domain.endswith('.'):
-        input_domain = input_domain[:-1]
-
-    if input_domain in DOMAIN_AVAILABILITY_CACHE:
-        return DOMAIN_AVAILABILITY_CACHE[input_domain]
-
-    print('[ STATUS ] Checking if ' + input_domain + ' is available...')
-
-    if GANDI_API_V4_KEY:
-        domain_available = can_register_with_gandi_api_v4(input_domain)
-    elif GANDI_API_V5_KEY:
-        domain_available = can_register_with_gandi_api_v5(input_domain)
-    else:
-        domain_available = can_register_with_aws_boto3(input_domain)
-
-    DOMAIN_AVAILABILITY_CACHE[input_domain] = domain_available
-
-    return domain_available
+from .global_state import (
+    AUTHORITATIVE_NS_LIST,
+    AWS_CREDS_FILE,
+    CHECK_DOMAIN_AVAILABILITY,
+    GANDI_API_V4_KEY,
+    GANDI_API_V5_KEY,
+    MASTER_DNS_CACHE,
+    NS_IP_MAP,
+    PREVIOUS_EDGES,
+    QUERY_ERROR_LIST,
+)
+from .register_checking import is_domain_available
+from .usage import parse_args
+from .utils import (
+    create_output_dir,
+    print_logo,
+)
 
 
 def get_base_domain(input_hostname):
@@ -569,6 +365,36 @@ def draw_graph_from_cache(target_hostname):
     return GRAPH_DATA
 
 
+def get_nameservers_with_no_ip():
+    """
+    Nameservers without any IPs might be vulnerable
+
+    :yields: string
+    Nameserver hostnames
+    """
+    for ns_hostname, ns_hostname_ip in NS_IP_MAP.items():
+        if not ns_hostname_ip:
+            yield ns_hostname
+
+
+def get_available_base_domains():
+    """
+    This can mean the domain can be registered and the DNS hijacked!
+
+    :yields: tuple (string, string)
+    e.g.
+        ("foo.com.", "ns2.foo.com.")
+    """
+    for ns_hostname in NS_IP_MAP:
+        base_domain = get_base_domain(ns_hostname)
+        if (
+            CHECK_DOMAIN_AVAILABILITY
+            and
+            is_domain_available(base_domain)
+        ):
+            yield (base_domain, ns_hostname)
+
+
 def get_graph_data_for_ns_result(ns_list, ns_result):
     return_graph_data_string = ''
 
@@ -578,7 +404,7 @@ def get_graph_data_for_ns_result(ns_list, ns_result):
         )
 
         if potential_edge not in PREVIOUS_EDGES:
-            PREVIOUS_EDGES.append(potential_edge)
+            PREVIOUS_EDGES.add(potential_edge)
             return_graph_data_string += (
                 '"{}" -> "{}" [shape=ellipse]'.format(
                     ns_result['nameserver_hostname'],
@@ -611,44 +437,33 @@ def get_graph_data_for_ns_result(ns_list, ns_result):
             )
         )
 
-    # Make all nameservers without any IPs red because they might be vulnerable
-    for ns_hostname, ns_hostname_ip in NS_IP_MAP.items():
-        if not ns_hostname_ip:
-            return_graph_data_string += (
-                '"{}" [shape=ellipse, style=filled, fillcolor="{}"];\n'.format(
-                    ns_hostname,
-                    RED,
-                )
+    # Make all nameservers without any IPs red because they are probably vulnerable
+    for ns_hostname in get_nameservers_with_no_ip():
+        return_graph_data_string += (
+            '"{}" [shape=ellipse, style=filled, fillcolor="{}"];\n'.format(
+                ns_hostname,
+                RED,
             )
+        )
 
-        base_domain = get_base_domain(ns_hostname)
-        if (
-            (
-                GANDI_API_V4_KEY
-                or
-                GANDI_API_V5_KEY
-                or
-                AWS_CREDS_FILE
+    # Make all nameservers with available base domains orange because they are probably vulnerable
+    for ns_hostname, base_domain in get_available_base_domains():
+        node_name = f"Base domain '" + base_domain + "' unregistered!"
+        potential_edge = ns_hostname + '->' + node_name
+        if potential_edge not in PREVIOUS_EDGES:
+            PREVIOUS_EDGES.add(potential_edge)
+            return_graph_data_string += (
+                '"{}" -> "{}";\n'.format(
+                    ns_hostname,
+                    node_name,
+                )
             )
-            and
-            is_domain_available(base_domain)
-        ):
-            node_name = "Base domain '" + base_domain + "' unregistered!"
-            potential_edge = ns_hostname + '->' + node_name
-            if potential_edge not in PREVIOUS_EDGES:
-                PREVIOUS_EDGES.append(potential_edge)
-                return_graph_data_string += (
-                    '"{}" -> "{}";\n'.format(
-                        ns_hostname,
-                        node_name,
-                    )
+            return_graph_data_string += (
+                '"{}"[shape=octagon, style=filled, fillcolor="{}"];\n'.format(
+                    node_name,
+                    ORANGE,
                 )
-                return_graph_data_string += (
-                    '"{}"[shape=octagon, style=filled, fillcolor="{}"];\n'.format(
-                        node_name,
-                        ORANGE,
-                    )
-                )
+            )
 
     # Make nodes for DNS error states encountered like NXDOMAIN, Timeout, etc.
     for query_error in QUERY_ERROR_LIST:
@@ -660,7 +475,7 @@ def get_graph_data_for_ns_result(ns_list, ns_result):
         )
 
         if potential_edge not in PREVIOUS_EDGES:
-            PREVIOUS_EDGES.append(potential_edge)
+            PREVIOUS_EDGES.add(potential_edge)
             return_graph_data_string += (
                 '"{}" -> "{}" '.format(
                     query_error['ns_hostname'],
@@ -702,37 +517,20 @@ def try_to_get_first_ip_for_hostname(hostname):
     return ''
 
 
-def create_output_dir():
-    try:
-        os.mkdir('output')
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-
-
-def print_logo():
-    print("""
-      ______                __ ______
-     /_  __/______  _______/ //_  __/_______  ___  _____
-      / / / ___/ / / / ___/ __// / / ___/ _ \\/ _ \\/ ___/
-     / / / /  / /_/ (__  ) /_ / / / /  /  __/  __(__  )
-    /_/ /_/   \\__,_/____/\\__//_/ /_/   \\___/\\___/____/
-              Graphing & Scanning DNS Delegation Trees
-    """)
-
-
 def main(command_line_args=sys.argv[1:]):
     args = parse_args(command_line_args)
 
     print_logo()
     create_output_dir()
 
-    if args.gandi_api_v4_key:
-        GANDI_API_V4_KEY = args.gandi_api_v4_key  # noqa: F841
+    if args.aws_creds_filepath:
+        AWS_CREDS_FILE = args.aws_creds_filepath
+    elif args.gandi_api_v4_key:
+        GANDI_API_V4_KEY = args.gandi_api_v4_key
     elif args.gandi_api_v5_key:
-        GANDI_API_V5_KEY = args.gandi_api_v5_key  # noqa: F841
-    elif args.aws_creds_filepath:
-        AWS_CREDS_FILE = args.aws_creds_filepath  # noqa: F841
+        GANDI_API_V5_KEY = args.gandi_api_v5_key
+    else:
+        CHECK_DOMAIN_AVAILABILITY = False
 
     if args.target_hostname:
         target_hostnames = [args.target_hostname]
