@@ -30,7 +30,7 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'trusttrees = trusttrees.__main__:main'
-        ]
-    }
+            'trusttrees = trusttrees.__main__:main',
+        ],
+    },
 )
