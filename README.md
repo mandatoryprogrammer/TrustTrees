@@ -104,13 +104,13 @@ optional arguments:
                         Comma-seperated export formats, e.g: -x png,pdf
 ```
 
-In order to use the domain-check functionality to look for domain takeovers via expired-domain registration you must have a Gandi production API key. Only Gandi is supported because they are the only registrar I'm aware of with a wide range of supported TLDs, a solid API, and good support. [Click here to sign up for a Gandi account.](https://www.gandi.net/)
+In order to use the domain-check functionality to look for domain takeovers via expired-domain registration you must have a Gandi production API key or AWS keys with the `route53domains:CheckDomainAvailability` IAM permission. Only Gandi and AWS are supported because they are the only registrars we are aware of with a wide range of supported TLDs, a solid API, and good support. [Click here to sign up for a Gandi account.](https://www.gandi.net/)
 
 ## Graph Nodes/Edges Documentation
 ### Nodes
 * *White Nameserver Nodes*: These are nameservers which have delegated the query to another nameserver and have not responded authoritatively to the query.
 * *Blue Nameserver Nodes*: These are nameservers which have answered authoritatively to the query.
-* *Red Nameserver Nodes*: These are nameserves which were found to have no IP address associated with them. They are essentially dead-ends because the resolver has no way to send queries to them.
+* *Red Nameserver Nodes*: These are nameservers which were found to have no IP address associated with them. They are essentially dead-ends because the resolver has no way to send queries to them.
 * *Yellow DNS Error Nodes*: These are DNS errors which occured while recursing the DNS chain.
 * *Orange Domain Unregistered Nodes*: These nodes indicate that the base domain for the nameserver is reported by Gandi to be unregistered. This can mean the domain can be registered and the DNS hijacked!
 
