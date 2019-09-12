@@ -134,6 +134,13 @@ QUERY_ERROR_LIST = []
 
 
 def auto_retry(registar_function):
+    """
+    :type registar_function: function
+    Returns a lowercase availability status when given a domain
+
+    :returns: function
+    A wrapped registar_function that retries
+    """
     def wrapper_of_registar_function(input_domain):
         for _ in range(10):
             status = registar_function(input_domain)
@@ -235,11 +242,11 @@ def is_domain_available(input_domain):
 
 def get_base_domain(input_hostname):
     """
-    :type input_hostname: str
+    :type input_hostname: string
     e.g.
         "ns2.foo.com."
 
-    :returns:string
+    :returns: string
     e.g.
         foo.com.
     """
