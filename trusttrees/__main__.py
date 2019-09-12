@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-import argparse
 import errno
+import json
 import os
 import random
 import subprocess
+import sys
 import time
+import xmlrpc.client
 from collections import defaultdict
 
 import boto3
@@ -14,11 +16,12 @@ import dns.flags
 import dns.rcode
 import dns.rdatatype
 import dns.resolver
-import json
 import pygraphviz
 import requests
 import tldextract
-import xmlrpc.client
+
+from .usage import parse_args
+
 
 gandi_api_v4 = xmlrpc.client.ServerProxy(uri='https://rpc.gandi.net/xmlrpc/')
 GANDI_API_V4_KEY = ''
@@ -196,6 +199,7 @@ def can_register_with_gandi_api_v5(input_domain):
 
     return status
 
+
 @auto_retry
 def can_register_with_aws_boto3(input_domain):
     """
@@ -204,7 +208,8 @@ def can_register_with_aws_boto3(input_domain):
     """
     with open(AWS_CREDS_FILE, 'r') as f:
         creds = json.load(f)
-    client = boto3.client('route53domains',
+    client = boto3.client(
+        'route53domains',
         aws_access_key_id=creds['accessKeyId'],
         aws_secret_access_key=creds['secretAccessKey'],
         region_name='us-east-1',  # Only region available
@@ -213,6 +218,7 @@ def can_register_with_aws_boto3(input_domain):
         DomainName=input_domain,
     )['Availability']
     return status.lower()
+
 
 def is_domain_available(input_domain):
     """
@@ -715,58 +721,8 @@ def print_logo():
     """)
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description="Graph out a domain's DNS delegation chain and trust trees!",
-    )
-
-    required_group = parser.add_mutually_exclusive_group(required=True)
-    required_group.add_argument(
-        '-t',
-        '--target',
-        dest='target_hostname',
-        help='Target hostname to generate delegation graph from.',
-    )
-    required_group.add_argument(
-        '-l',
-        '--target-list',
-        dest='target_hostnames_list',
-        help='Input file with a list of target hostnames.',
-    )
-
-    parser.add_argument(
-        '-o',
-        '--open',
-        dest='open',
-        help='Open the generated graph once run.',
-        action='store_true',
-    )
-    parser.add_argument(
-        '--gandi-api-v4-key',
-        dest='gandi_api_v4_key',
-        help='Gandi API V4 key for checking if nameserver base domains are registerable.',
-        metavar='GANDI_API_V4_KEY',
-    )
-    parser.add_argument(
-        '--gandi-api-v5-key',
-        dest='gandi_api_v5_key',
-        help='Gandi API V5 key for checking if nameserver base domains are registerable.',
-        metavar='GANDI_API_V5_KEY',
-    )
-    parser.add_argument(
-        '--aws-credentials',
-        dest='aws_creds_filepath',
-        help='Use AWS credentials from a json file for checking if nameserver base domains are registerable.',
-        metavar='AWS_CREDS_FILE',
-    )
-    parser.add_argument(
-        '-x',
-        '--export-formats',
-        dest='export_formats',
-        help='Comma-seperated export formats, e.g: -x png,pdf',
-        default='png',
-    )
-    args = parser.parse_args()
+def main(command_line_args=sys.argv[1:]):
+    args = parse_args(command_line_args)
 
     print_logo()
     create_output_dir()
@@ -812,3 +768,9 @@ if __name__ == '__main__':
                 subprocess.call(['open', file_name])
 
         print('[ SUCCESS ] Finished generating graph!')
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

@@ -27,6 +27,10 @@ setup(
     author='mandatoryprogrammer',
     packages=find_packages(),
     install_requires=requirements(),
-    scripts=['trusttrees.py'],
     include_package_data=True,
+    entry_points={
+        'console_scripts': [
+            'trusttrees = trusttrees.__main__:main'
+        ]
+    }
 )

@@ -20,7 +20,7 @@ $ pip install TrustTrees
 
 ## Example Usage:
 ```
-(env)bash-3.2$ trusttrees.py --target example.com --open
+(env)bash-3.2$ trusttrees --target example.com --open
 
   ______                __ ______
  /_  __/______  _______/ //_  __/_______  ___  _____
@@ -75,20 +75,25 @@ The above graph is a good example of a domain with many DNS errors in its delega
 
 ## Command-Line Options
 ```sh
-(env)bash-3.2$ trusttrees.py --help
-usage: trusttrees.py [-h] (-t TARGET_HOSTNAME | -l TARGET_HOSTNAMES_LIST) [-o]
-                     [--gandi-api-v4-key GANDI_API_V4_KEY]
-                     [--gandi-api-v5-key GANDI_API_V5_KEY] [-x EXPORT_FORMATS]
+(env)bash-3.2$ trusttrees --help
+usage: trusttrees [-h] (-t TARGET_HOSTNAME | -l TARGET_HOSTNAMES_LIST) [-o]
+                  [--aws-credentials AWS_CREDS_FILE]
+                  [--gandi-api-v4-key GANDI_API_V4_KEY]
+                  [--gandi-api-v5-key GANDI_API_V5_KEY] [-x EXPORT_FORMATS]
 
 Graph out a domain's DNS delegation chain and trust trees!
 
-optional arguments:
-  -h, --help            show this help message and exit
+mutually exclusive required arguments:
   -t TARGET_HOSTNAME, --target TARGET_HOSTNAME
                         Target hostname to generate delegation graph from.
   -l TARGET_HOSTNAMES_LIST, --target-list TARGET_HOSTNAMES_LIST
                         Input file with a list of target hostnames.
+
+optional arguments:
   -o, --open            Open the generated graph once run.
+  --aws-credentials AWS_CREDS_FILE
+                        Use AWS credentials from a json file for checking if
+                        nameserver base domains are registerable.
   --gandi-api-v4-key GANDI_API_V4_KEY
                         Gandi API V4 key for checking if nameserver base
                         domains are registerable.
