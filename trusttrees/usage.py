@@ -30,7 +30,7 @@ def _add_optional_args(parser):
     optional_group.add_argument(
         '--aws-credentials',
         dest='aws_creds_filepath',
-        help='Use AWS credentials from a json file for checking if nameserver base domains are registerable.',
+        help='AWS credentials JSON file for checking if nameserver base domains are registerable.',
         metavar='AWS_CREDS_FILE',
     )
     optional_group.add_argument(

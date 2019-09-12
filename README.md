@@ -92,8 +92,8 @@ mutually exclusive required arguments:
 optional arguments:
   -o, --open            Open the generated graph once run.
   --aws-credentials AWS_CREDS_FILE
-                        Use AWS credentials from a json file for checking if
-                        nameserver base domains are registerable.
+                        AWS credentials JSON file for checking if nameserver
+                        base domains are registerable.
   --gandi-api-v4-key GANDI_API_V4_KEY
                         Gandi API V4 key for checking if nameserver base
                         domains are registerable.
