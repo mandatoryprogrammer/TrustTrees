@@ -4,7 +4,7 @@ from __future__ import print_function
 import errno
 import json
 import os
-import random
+import secrets
 import subprocess
 import sys
 import time
@@ -264,7 +264,7 @@ def get_base_domain(input_hostname):
 
 
 def get_random_root_ns_set():
-    return random.choice(ROOT_SERVERS)
+    return secrets.choice(ROOT_SERVERS)
 
 
 def dns_query(target_hostname, query_type, target_nameserver):
@@ -488,7 +488,7 @@ def enumerate_nameservers(domain_name):
     if not domain_name.endswith('.'):
         domain_name += '.'
 
-    # First get a random root server and query it to bootstrap our walk of the chain
+    # Get random root server and query it to bootstrap our walk of the chain
     root_ns_set = get_random_root_ns_set()
     tld_ns_result = ns_query(
         hostname=domain_name,
@@ -728,11 +728,11 @@ def main(command_line_args=sys.argv[1:]):
     create_output_dir()
 
     if args.gandi_api_v4_key:
-        GANDI_API_V4_KEY = args.gandi_api_v4_key
+        GANDI_API_V4_KEY = args.gandi_api_v4_key  # noqa: F841
     elif args.gandi_api_v5_key:
-        GANDI_API_V5_KEY = args.gandi_api_v5_key
+        GANDI_API_V5_KEY = args.gandi_api_v5_key  # noqa: F841
     elif args.aws_creds_filepath:
-        AWS_CREDS_FILE = args.aws_creds_filepath
+        AWS_CREDS_FILE = args.aws_creds_filepath  # noqa: F841
 
     if args.target_hostname:
         target_hostnames = [args.target_hostname]
