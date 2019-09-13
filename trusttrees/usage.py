@@ -1,7 +1,7 @@
 import argparse
 
 
-def _add_required_args(parser):
+def _add_mutually_exclusive_required_args(parser):
     required_group = parser.add_mutually_exclusive_group(required=True)
     required_group.add_argument(
         '-t',
@@ -70,7 +70,7 @@ def parse_args(args):
     """
     # Remove --help from the mutually exclusive required arguments group
     parser._action_groups[1]._group_actions = []
-    _add_required_args(parser)
+    _add_mutually_exclusive_required_args(parser)
     # `add_mutually_exclusive_group` does not accept a title, so change it
     parser._action_groups[1].title = 'mutually exclusive required arguments'
 
