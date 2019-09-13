@@ -101,7 +101,7 @@ optional arguments:
                         Gandi API V5 key for checking if nameserver base
                         domains are registerable.
   -x EXPORT_FORMATS, --export-formats EXPORT_FORMATS
-                        Comma-seperated export formats, e.g: -x png,pdf
+                        Comma-separated export formats, e.g: -x png,pdf
 ```
 
 In order to use the domain-check functionality to look for domain takeovers via expired-domain registration you must have a Gandi production API key or AWS keys with the `route53domains:CheckDomainAvailability` IAM permission. Only Gandi is supported because they are the only registrar we are aware of with a wide range of supported TLDs, a solid API, and good support. (AWS uses Gandi behind the scenes.) [Click here to sign up for a Gandi account.](https://www.gandi.net/)

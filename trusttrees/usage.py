@@ -50,7 +50,7 @@ def _add_optional_args(parser):
         '-x',
         '--export-formats',
         dest='export_formats',
-        help='Comma-seperated export formats, e.g: -x png,pdf',
+        help='Comma-separated export formats, e.g: -x png,pdf',
         default='png',
     )
 
