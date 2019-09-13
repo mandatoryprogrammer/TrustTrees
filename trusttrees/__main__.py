@@ -52,11 +52,8 @@ def get_base_domain(input_hostname):
     e.g.
         foo.com.
     """
-    tldexact_parts = tldextract.extract('http://' + input_hostname)
-    return '{}.{}.'.format(
-        tldexact_parts.domain,
-        tldexact_parts.suffix,
-    )
+    tldexact_parts = tldextract.extract(f'http://{input_hostname}')
+    return f'{tldexact_parts.domain}.{tldexact_parts.suffix}.'
 
 
 def get_random_root_ns_set():
@@ -90,11 +87,7 @@ def ns_query(hostname, nameserver_ip, nameserver_hostname):
     hostname = hostname.lower()
 
     # Create cache key and check if we already cached this response
-    cache_key = '{}|ns|{}|{}'.format(
-        hostname,
-        nameserver_ip,
-        nameserver_hostname,
-    )
+    cache_key = f'{hostname}|ns|{nameserver_ip}|{nameserver_hostname}'
     if cache_key in MASTER_DNS_CACHE:
         return MASTER_DNS_CACHE[cache_key]
 
@@ -334,10 +327,10 @@ def draw_graph_from_cache(target_hostname):
     For pygraphviz.AGraph()
     """
     GRAPH_DATA = (
-        """
+        f"""
         digraph G {{
         graph [
-            label=\"{} DNS Trust Graph\",
+            label=\"{target_hostname} DNS Trust Graph\",
             labelloc="t",
             pad="3",
             nodesep="1",
@@ -346,11 +339,11 @@ def draw_graph_from_cache(target_hostname):
         ];
         edge[arrowhead=vee, arrowtail=inv, arrowsize=.7]
         concentrate=true;
-        """.format(target_hostname)
+        """
     )
 
     for cache_key, ns_result in MASTER_DNS_CACHE.items():
-        print("[ STATUS ] Building '" + cache_key + "'...")
+        print(f"[ STATUS ] Building '{cache_key}'...")
         for section_of_NS_answer in (
             'additional_ns',
             'authority_ns',
@@ -400,7 +393,7 @@ def get_graph_data_for_ns_result(ns_list, ns_result):
 
     for ns_rrset in ns_list:
         potential_edge = (
-            ns_result['nameserver_hostname'] + '->' + ns_rrset['ns_hostname']
+            f"{ns_result['nameserver_hostname']}->{ns_rrset['ns_hostname']}"
         )
 
         if potential_edge not in PREVIOUS_EDGES:
@@ -420,67 +413,47 @@ def get_graph_data_for_ns_result(ns_list, ns_result):
             )
 
             if is_authoritative(ns_result['flags']):
-                return_graph_data_string += '[color="{}"] '.format(BLUE)
+                return_graph_data_string += f'[color="{BLUE}"] '
             else:
-                return_graph_data_string += '[style="dashed", color="{}"] '.format(
-                    GRAY,
-                )
+                return_graph_data_string += f'[style="dashed", color="{GRAY}"] '
 
             return_graph_data_string += ';\n'
 
     # Make all nameservers which were specified with an AA flag blue
     for ns_hostname in AUTHORITATIVE_NS_LIST:
         return_graph_data_string += (
-            '"{}" [shape=ellipse, style=filled, fillcolor="{}"];\n'.format(
-                ns_hostname,
-                BLUE,
-            )
+            f'"{ns_hostname}" [shape=ellipse, style=filled, fillcolor="{BLUE}"];\n'
         )
 
     # Make all nameservers without any IPs red because they are probably vulnerable
     for ns_hostname in get_nameservers_with_no_ip():
         return_graph_data_string += (
-            '"{}" [shape=ellipse, style=filled, fillcolor="{}"];\n'.format(
-                ns_hostname,
-                RED,
-            )
+            f'"{ns_hostname}" [shape=ellipse, style=filled, fillcolor="{RED}"];\n'
         )
 
     # Make all nameservers with available base domains orange because they are probably vulnerable
     for ns_hostname, base_domain in get_available_base_domains():
-        node_name = f"Base domain '" + base_domain + "' unregistered!"
-        potential_edge = ns_hostname + '->' + node_name
+        node_name = f"Base domain '{base_domain}' unregistered!"
+        potential_edge = f'{ns_hostname}->{node_name}'
         if potential_edge not in PREVIOUS_EDGES:
             PREVIOUS_EDGES.add(potential_edge)
             return_graph_data_string += (
-                '"{}" -> "{}";\n'.format(
-                    ns_hostname,
-                    node_name,
-                )
+                f'"{ns_hostname}" -> "{node_name}";\n'
             )
             return_graph_data_string += (
-                '"{}"[shape=octagon, style=filled, fillcolor="{}"];\n'.format(
-                    node_name,
-                    ORANGE,
-                )
+                f'"{node_name}"[shape=octagon, style=filled, fillcolor="{ORANGE}"];\n'
             )
 
     # Make nodes for DNS error states encountered like NXDOMAIN, Timeout, etc.
     for query_error in QUERY_ERROR_LIST:
         potential_edge = (
-            '{}->{}'.format(
-                query_error['ns_hostname'],
-                query_error['error'],
-            )
+            f'{query_error["ns_hostname"]}->{query_error["error"]}'
         )
 
         if potential_edge not in PREVIOUS_EDGES:
             PREVIOUS_EDGES.add(potential_edge)
             return_graph_data_string += (
-                '"{}" -> "{}" '.format(
-                    query_error['ns_hostname'],
-                    query_error['error'],
-                )
+                f'"{query_error["ns_hostname"]}" -> "{query_error["error"]}" '
             )
             return_graph_data_string += (
                 '[label=<<i>{}?</i><br /><font point-size="10">{}</font>>];\n'.format(
@@ -550,20 +523,18 @@ def main(command_line_args=sys.argv[1:]):
             for extension in
             args.export_formats.split(',')
         ]
-        output_graph_file = './output/{}_trust_tree_graph.'.format(
-            target_hostname,
-        )
+        output_graph_file = f'./output/{target_hostname}_trust_tree_graph'
         # Render graph image
         grapher = pygraphviz.AGraph(
             draw_graph_from_cache(target_hostname),
         )
 
         for export_format in export_formats:
-            file_name = output_graph_file + export_format
-            grapher.draw(file_name, prog='dot')
+            filename = f'{output_graph_file}.{export_format}'
+            grapher.draw(filename, prog='dot')
             if args.open:
                 print('[ STATUS ] Opening final graph...')
-                subprocess.call(['open', file_name])
+                subprocess.call(['open', filename])
 
         print('[ SUCCESS ] Finished generating graph!')
 

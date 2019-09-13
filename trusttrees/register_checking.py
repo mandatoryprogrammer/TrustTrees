@@ -22,7 +22,7 @@ def _auto_retry(registar_function):
     Returns a lowercase availability status when given a domain
 
     :returns: function
-    A wrapped registar_function that retries
+    A wrapped registar_function that retries and returns a bool
     """
     def wrapper_of_registar_function(input_domain):
         for _ in range(10):
@@ -64,7 +64,7 @@ def _can_register_with_gandi_api_v5(input_domain):
             'name': input_domain,
         },
         headers={
-            'Authorization': 'Apikey {}'.format(GANDI_API_V5_KEY),
+            'Authorization': f'Apikey {GANDI_API_V5_KEY}',
         },
     )
     assert response.status_code == 200
@@ -112,7 +112,7 @@ def is_domain_available(input_domain):
     if input_domain in DOMAIN_AVAILABILITY_CACHE:
         return DOMAIN_AVAILABILITY_CACHE[input_domain]
 
-    print('[ STATUS ] Checking if ' + input_domain + ' is available...')
+    print(f'[ STATUS ] Checking if {input_domain} is available...')
 
     if GANDI_API_V4_KEY:
         domain_available = _can_register_with_gandi_api_v4(input_domain)
