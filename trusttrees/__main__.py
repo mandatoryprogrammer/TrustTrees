@@ -34,7 +34,7 @@ from .global_state import (
     PREVIOUS_EDGES,
     QUERY_ERROR_LIST,
 )
-from .register_checking import is_domain_available
+from .registar_checking import is_domain_available
 from .usage import parse_args
 from .utils import (
     create_output_dir,
