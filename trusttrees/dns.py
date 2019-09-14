@@ -7,7 +7,6 @@ import dns.resolver
 
 from . import global_state
 from .constants import (
-    DNS_WATCH_RESOLVER,
     IPV6_ENABLED,
     MAX_RECURSION_DEPTH,
     ROOT_SERVERS,
@@ -61,7 +60,7 @@ def _try_to_get_first_ip_for_hostname(hostname):
         answer = _dns_query(
             hostname,
             query_type='A',
-            target_nameserver=DNS_WATCH_RESOLVER,
+            target_nameserver=secrets.choice(global_state.RESOLVERS),
         )
         if answer.rrset:
             return str(answer.rrset[0])
@@ -223,7 +222,7 @@ def _ns_query(hostname, nameserver_ip, nameserver_hostname):
                 # Since NS results sometimes do not have a glue record, we have to retrieve it..
                 # If ns_hostname is not in our DNS cache
                 if not global_state.NS_IP_MAP[ns_hostname]:
-                    # Send an A query to DNS_WATCH_RESOLVER to get the IP
+                    # Send an A query to a resolver to get the IP
                     global_state.NS_IP_MAP[ns_hostname] = _try_to_get_first_ip_for_hostname(
                         ns_hostname,
                     )

@@ -8,6 +8,7 @@ GANDI_API_V5_KEY = ''
 CHECK_DOMAIN_AVAILABILITY = True
 
 PREVIOUS_EDGES = set()
+RESOLVERS = []
 
 """
 Saved results of DNS queries, key format is the following:

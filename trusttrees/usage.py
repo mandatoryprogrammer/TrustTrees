@@ -13,7 +13,7 @@ def _add_mutually_exclusive_required_args(parser):
         '-l',
         '--target-list',
         dest='target_hostnames_list',
-        help='Input file with a list of target hostnames.',
+        help='Text file with a list of target hostnames.',
     )
 
 
@@ -65,6 +65,13 @@ def _add_optional_args(parser):
         dest='gandi_api_v5_key',
         help='Gandi API V5 key for checking if nameserver base domains are registerable.',
         metavar='GANDI_API_V5_KEY',
+    )
+
+    optional_group.add_argument(
+        '--resolvers',
+        dest='resolvers',
+        help='Text file containing DNS resolvers.',
+        metavar='RESOLVERS_FILE',
     )
 
 

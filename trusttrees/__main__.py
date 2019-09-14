@@ -1,6 +1,5 @@
 import sys
 
-from . import global_state
 from .dns import enumerate_nameservers
 from .draw import generate_graph
 from .usage import parse_args
@@ -8,6 +7,7 @@ from .utils import (
     clear_global_state,
     create_output_dir,
     print_logo,
+    set_global_state_with_args,
 )
 
 
@@ -16,15 +16,7 @@ def main(command_line_args=sys.argv[1:]):
 
     print_logo()
     create_output_dir()
-
-    if args.aws_creds_filepath:
-        global_state.AWS_CREDS_FILE = args.aws_creds_filepath
-    elif args.gandi_api_v4_key:
-        global_state.GANDI_API_V4_KEY = args.gandi_api_v4_key
-    elif args.gandi_api_v5_key:
-        global_state.GANDI_API_V5_KEY = args.gandi_api_v5_key
-    else:
-        global_state.CHECK_DOMAIN_AVAILABILITY = False
+    set_global_state_with_args(args)
 
     if args.target_hostname:
         target_hostnames = [args.target_hostname]

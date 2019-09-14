@@ -5,6 +5,7 @@ from collections import defaultdict
 import tldextract
 
 from . import global_state
+from .constants import DNS_WATCH_RESOLVER
 from .registar_checking import is_domain_available
 
 
@@ -84,3 +85,26 @@ def print_logo():
     /_/ /_/   \\__,_/____/\\__//_/ /_/   \\___/\\___/____/
               Graphing & Scanning DNS Delegation Trees
     """)
+
+
+def set_global_state_with_args(args):
+    # For domain-check functionality
+    if args.aws_creds_filepath:
+        global_state.AWS_CREDS_FILE = args.aws_creds_filepath
+    elif args.gandi_api_v4_key:
+        global_state.GANDI_API_V4_KEY = args.gandi_api_v4_key
+    elif args.gandi_api_v5_key:
+        global_state.GANDI_API_V5_KEY = args.gandi_api_v5_key
+    else:
+        global_state.CHECK_DOMAIN_AVAILABILITY = False
+
+    # To use a random resolver every time
+    if args.resolvers:
+        resolvers = open(args.resolvers)
+        global_state.RESOLVERS = [
+            resolver if resolver else DNS_WATCH_RESOLVER
+            for resolver in
+            resolvers.read().split('\n')
+        ][:-1]  # Skip the EOF newline
+    else:
+        global_state.RESOLVERS = [DNS_WATCH_RESOLVER]
