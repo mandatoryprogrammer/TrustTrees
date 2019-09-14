@@ -49,29 +49,32 @@ def _add_optional_args(parser):
     )
 
     optional_group.add_argument(
+        '--resolvers',
+        dest='resolvers',
+        help='Text file containing DNS resolvers to use.',
+        metavar='RESOLVERS_FILE',
+    )
+
+    optional_domain_checking_group = parser.add_argument_group(
+        title='optional arguments for domain-checking',
+    )
+    optional_domain_checking_group.add_argument(
         '--aws-credentials',
         dest='aws_creds_filepath',
         help='AWS credentials JSON file for checking if nameserver base domains are registerable.',
         metavar='AWS_CREDS_FILE',
     )
-    optional_group.add_argument(
+    optional_domain_checking_group.add_argument(
         '--gandi-api-v4-key',
         dest='gandi_api_v4_key',
         help='Gandi API V4 key for checking if nameserver base domains are registerable.',
         metavar='GANDI_API_V4_KEY',
     )
-    optional_group.add_argument(
+    optional_domain_checking_group.add_argument(
         '--gandi-api-v5-key',
         dest='gandi_api_v5_key',
         help='Gandi API V5 key for checking if nameserver base domains are registerable.',
         metavar='GANDI_API_V5_KEY',
-    )
-
-    optional_group.add_argument(
-        '--resolvers',
-        dest='resolvers',
-        help='Text file containing DNS resolvers.',
-        metavar='RESOLVERS_FILE',
     )
 
 

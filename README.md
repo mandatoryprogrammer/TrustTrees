@@ -87,10 +87,10 @@ The above graph is a good example of a domain with many DNS errors in its delega
 (env)bash-3.2$ trusttrees --help
 usage: trusttrees [-h] (-t TARGET_HOSTNAME | -l TARGET_HOSTNAMES_LIST) [-o]
                   [--only-problematic] [--no-graphing] [-x EXPORT_FORMATS]
+                  [--resolvers RESOLVERS_FILE]
                   [--aws-credentials AWS_CREDS_FILE]
                   [--gandi-api-v4-key GANDI_API_V4_KEY]
                   [--gandi-api-v5-key GANDI_API_V5_KEY]
-                  [--resolvers RESOLVERS_FILE]
 
 Graph out a domain's DNS delegation chain and trust trees!
 
@@ -106,6 +106,10 @@ optional arguments:
   --no-graphing         Do not generate any graphs.
   -x EXPORT_FORMATS, --export-formats EXPORT_FORMATS
                         Comma-separated export formats, e.g: -x png,pdf
+  --resolvers RESOLVERS_FILE
+                        Text file containing DNS resolvers to use.
+
+optional arguments for domain-checking:
   --aws-credentials AWS_CREDS_FILE
                         AWS credentials JSON file for checking if nameserver
                         base domains are registerable.
@@ -115,8 +119,6 @@ optional arguments:
   --gandi-api-v5-key GANDI_API_V5_KEY
                         Gandi API V5 key for checking if nameserver base
                         domains are registerable.
-  --resolvers RESOLVERS_FILE
-                        Text file containing DNS resolvers.
 ```
 
 In order to use the domain-check functionality to look for domain takeovers via expired-domain registration you must have a Gandi production API key or AWS keys with the `route53domains:CheckDomainAvailability` IAM permission. Only Gandi is supported because they are the only registrar we are aware of with a wide range of supported TLDs, a solid API, and good support. (AWS uses Gandi behind the scenes.) [Click here to sign up for a Gandi account.](https://www.gandi.net/)
