@@ -1,10 +1,19 @@
-[![PyPI version](https://badge.fury.io/py/TrustTrees.svg)](https://badge.fury.io/py/TrustTrees)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg)](https://github.com/mandatoryprogrammer/TrustTrees/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+)
-[![Tor](https://img.shields.io/badge/Donate-Tor-orange)](https://donate.torproject.org/)
-[![Python 3.7](https://img.shields.io/badge/python-v3.7-blue.svg)](https://pypi.org/project/TrustTrees/2.0.1/)
+<p align="center"><h1 align="center">
+  TrustTrees
+</h1>
 
-# TrustTrees
-## *A Tool for DNS Delegation Trust Graphing*
+<p align="center"><h2 align="center">
+  <i>A Tool for DNS Delegation Trust Graphing</i>
+</h2>
+
+<p align="center">
+  <a href="https://badge.fury.io/py/TrustTrees"><img src="https://badge.fury.io/py/TrustTrees.svg" alt="PyPI version"/></a>
+  <a href="https://github.com/mandatoryprogrammer/TrustTrees/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+"><img src="https://img.shields.io/badge/PRs-welcome-ff69b4.svg" alt="PRs Welcome"/></a>
+  <a href="https://donate.torproject.org/"><img src="https://img.shields.io/badge/Donate-Tor-orange" alt="Tor"/></a>
+  <a href="https://pypi.org/project/TrustTrees/2.0.1/"><img src="https://img.shields.io/badge/python-v3.7-blue.svg" alt="Python 3.7"/></a>
+</p>
+</p>
+
 
 ## Summary
 TrustTrees is a script to recursively follow all the possible delegation paths for a target domain and graph the relationships between various nameservers along the way. TrustTrees also allows you to view where errors occured in this chain such as DNS `REFUSED`, `NXDOMAIN`, and other errors. Finally, the tool also comes with the ability to scan enumerated nameservers for expired base-domains which may allow for domain takeovers and hijacking of the target domain.
