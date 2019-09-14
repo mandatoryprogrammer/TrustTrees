@@ -126,4 +126,8 @@ def is_domain_available(input_domain):
     domain_available = _can_register_function(input_domain)
     DOMAIN_AVAILABILITY_CACHE[input_domain] = domain_available
 
+    print(
+        f"[ STATUS ] {input_domain} {'is' if domain_available else 'is not'} available!",
+    )
+
     return domain_available
