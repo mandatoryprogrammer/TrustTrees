@@ -1,5 +1,22 @@
 import errno
 import os
+from collections import defaultdict
+
+import tldextract
+
+from . import global_state
+from .registar_checking import is_domain_available
+
+
+def clear_global_state():
+    """
+    See global_state.py for more information
+    """
+    global_state.PREVIOUS_EDGES = set()
+    global_state.MASTER_DNS_CACHE = {}
+    global_state.NS_IP_MAP = defaultdict(str)
+    global_state.AUTHORITATIVE_NS_LIST = []
+    global_state.QUERY_ERROR_LIST = []
 
 
 def create_output_dir():
@@ -8,6 +25,54 @@ def create_output_dir():
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
+
+
+def _get_base_domain(input_hostname):
+    """
+    :type input_hostname: string
+    e.g.
+        "ns2.foo.com."
+
+    :returns: string
+    e.g.
+        foo.com.
+    """
+    tldexact_parts = tldextract.extract(f'http://{input_hostname}')
+    return f'{tldexact_parts.domain}.{tldexact_parts.suffix}.'
+
+
+def get_available_base_domains():
+    """
+    This can mean the domain can be registered and the DNS hijacked!
+
+    :yields: tuple (string, string)
+    e.g.
+        ("foo.com.", "ns2.foo.com.")
+    """
+    for ns_hostname in global_state.NS_IP_MAP:
+        base_domain = _get_base_domain(ns_hostname)
+        if (
+            global_state.CHECK_DOMAIN_AVAILABILITY
+            and
+            is_domain_available(base_domain)
+        ):
+            yield (base_domain, ns_hostname)
+
+
+def get_nameservers_with_no_ip():
+    """
+    Nameservers without any IPs might be vulnerable
+
+    :yields: string
+    Nameserver hostnames
+    """
+    for ns_hostname, ns_hostname_ip in global_state.NS_IP_MAP.items():
+        if not ns_hostname_ip:
+            yield ns_hostname
+
+
+def is_authoritative(flags):
+    return 'AA' in flags
 
 
 def print_logo():

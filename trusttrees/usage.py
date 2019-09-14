@@ -23,8 +23,29 @@ def _add_optional_args(parser):
         '-o',
         '--open',
         dest='open',
-        help='Open the generated graph once run.',
+        help='Open the generated graph(s) once run.',
         action='store_true',
+    )
+
+    optional_group.add_argument(
+        '--only-problematic',
+        dest='only_draw_problematic',
+        help='Open generate graphs that are likely to be vulnerable.',
+        action='store_true',
+    )
+    optional_group.add_argument(
+        '--no-graphing',
+        dest='no_graphing',
+        help='Do not generate any graphs.',
+        action='store_true',
+    )
+
+    optional_group.add_argument(
+        '-x',
+        '--export-formats',
+        dest='export_formats',
+        help='Comma-separated export formats, e.g: -x png,pdf',
+        default='png',
     )
 
     optional_group.add_argument(
@@ -44,14 +65,6 @@ def _add_optional_args(parser):
         dest='gandi_api_v5_key',
         help='Gandi API V5 key for checking if nameserver base domains are registerable.',
         metavar='GANDI_API_V5_KEY',
-    )
-
-    optional_group.add_argument(
-        '-x',
-        '--export-formats',
-        dest='export_formats',
-        help='Comma-separated export formats, e.g: -x png,pdf',
-        default='png',
     )
 
 

@@ -5,15 +5,13 @@ import xmlrpc.client
 import boto3
 import requests
 
-from .global_state import (
-    AWS_CREDS_FILE,
-    GANDI_API_V4_KEY,
-    GANDI_API_V5_KEY,
-)
+from . import global_state
 
 
 DOMAIN_AVAILABILITY_CACHE = {}
-gandi_api_v4 = xmlrpc.client.ServerProxy(uri='https://rpc.gandi.net/xmlrpc/')
+gandi_api_v4 = xmlrpc.client.ServerProxy(
+    uri='https://rpc.gandi.net/xmlrpc/',
+)
 
 
 def _auto_retry(registar_function):
@@ -43,7 +41,7 @@ def _can_register_with_gandi_api_v4(input_domain):
     availability status returned from the API
     """
     status = gandi_api_v4.domain.available(
-        GANDI_API_V4_KEY,
+        global_state.GANDI_API_V4_KEY,
         [input_domain],
     )[input_domain]
     return status
@@ -64,7 +62,7 @@ def _can_register_with_gandi_api_v5(input_domain):
             'name': input_domain,
         },
         headers={
-            'Authorization': f'Apikey {GANDI_API_V5_KEY}',
+            'Authorization': f'Apikey {global_state.GANDI_API_V5_KEY}',
         },
     )
     assert response.status_code == 200
@@ -86,7 +84,7 @@ def _can_register_with_aws_boto3(input_domain):
     :returns: lowercase string
     availability status returned from the API
     """
-    with open(AWS_CREDS_FILE, 'r') as f:
+    with open(global_state.AWS_CREDS_FILE, 'r') as f:
         creds = json.load(f)
     client = boto3.client(
         'route53domains',
@@ -102,7 +100,11 @@ def _can_register_with_aws_boto3(input_domain):
 
 def is_domain_available(input_domain):
     """
-    Called if Gandi API key/AWS key is provided.
+    Called if Gandi API key or AWS credentials file is provided.
+
+    Note that we do not do `lru_cache(maxsize=0)` but instead
+    use our own cache. This is because we normalize input when
+    removing any trailing '.' characters.
 
     :returns: bool
     """
@@ -114,13 +116,14 @@ def is_domain_available(input_domain):
 
     print(f'[ STATUS ] Checking if {input_domain} is available...')
 
-    if GANDI_API_V4_KEY:
-        domain_available = _can_register_with_gandi_api_v4(input_domain)
-    elif GANDI_API_V5_KEY:
-        domain_available = _can_register_with_gandi_api_v5(input_domain)
+    if global_state.GANDI_API_V4_KEY:
+        _can_register_function = _can_register_with_gandi_api_v4
+    elif global_state.GANDI_API_V5_KEY:
+        _can_register_function = _can_register_with_gandi_api_v5
     else:
-        domain_available = _can_register_with_aws_boto3(input_domain)
+        _can_register_function = _can_register_with_aws_boto3
 
+    domain_available = _can_register_function(input_domain)
     DOMAIN_AVAILABILITY_CACHE[input_domain] = domain_available
 
     return domain_available
