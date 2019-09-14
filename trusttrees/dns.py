@@ -64,7 +64,12 @@ def _try_to_get_first_ip_for_hostname(hostname):
         )
         if answer.rrset:
             return str(answer.rrset[0])
-    except Exception:
+    except (
+        dns.resolver.NoNameservers,
+        dns.resolver.NXDOMAIN,
+        dns.resolver.Timeout,
+        dns.resolver.YXDOMAIN,
+    ):
         pass
     return ''
 
