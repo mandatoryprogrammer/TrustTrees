@@ -104,6 +104,8 @@ optional arguments:
   -o, --open            Open the generated graph(s) once run.
   --only-problematic    Open generate graphs that are likely to be vulnerable.
   --no-graphing         Do not generate any graphs.
+  -u, --upload-graph    Upload the generated graph to S3 with given prefix,bucket.
+                        Requires PutObject permissions.
   -x EXPORT_FORMATS, --export-formats EXPORT_FORMATS
                         Comma-separated export formats, e.g: -x png,pdf
   --resolvers RESOLVERS_FILE
