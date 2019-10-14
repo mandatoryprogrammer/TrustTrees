@@ -49,6 +49,14 @@ def _add_optional_args(parser):
     )
 
     optional_group.add_argument(
+        '-u',
+        '--upload-graph',
+        dest='upload_args',
+        help='Comma-separated AWS args, e.g: -u graphs,mybucket',
+        metavar='PREFIX,BUCKET',
+    )
+
+    optional_group.add_argument(
         '--resolvers',
         dest='resolvers',
         help='Text file containing DNS resolvers to use.',
