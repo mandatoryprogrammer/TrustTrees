@@ -170,7 +170,7 @@ def generate_graph(
             subprocess.call(['open', filename])
         if upload_args:
             print('[ STATUS ] Uploading to AWS...')
-            prefix, bucket = upload_args.split()
+            prefix, bucket = upload_args.split(',')
             with open(global_state.AWS_CREDS_FILE, 'r') as f:
                 creds = json.load(f)
             client = boto3.client(
