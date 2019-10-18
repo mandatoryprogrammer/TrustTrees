@@ -1,3 +1,4 @@
+import boto3
 import pygraphviz
 
 import subprocess
@@ -144,6 +145,7 @@ def generate_graph(
     export_formats,
     only_draw_problematic,
     open_graph_file,
+    upload_args,
 ):
     output_graph_file = f'./output/{target_hostname}_trust_tree_graph'
 
@@ -166,5 +168,17 @@ def generate_graph(
         if open_graph_file:
             print('[ STATUS ] Opening final graph...')
             subprocess.call(['open', filename])
+        if upload_args:
+            print('[ STATUS ] Uploading to AWS...')
+            prefix, bucket = upload_args.split(',')
+            with open(global_state.AWS_CREDS_FILE, 'r') as f:
+                creds = json.load(f)
+            client = boto3.client(
+                's3',
+                aws_access_key_id=creds['accessKeyId'],
+                aws_secret_access_key=creds['secretAccessKey'],
+                region_name='us-west-1',
+            )
+            client.upload_file(prefix+filename, bucket, filename)
 
     print('[ SUCCESS ] Finished generating graph!')

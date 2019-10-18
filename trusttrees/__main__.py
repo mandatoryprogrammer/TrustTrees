@@ -44,6 +44,7 @@ def main(command_line_args=sys.argv[1:]):
             export_formats,
             args.only_draw_problematic,
             args.open,
+            args.upload_args,
         )
 
     return 0
