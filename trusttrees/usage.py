@@ -87,7 +87,7 @@ def _add_optional_args(parser):
 
 
 def parse_args(args):
-    if len(args) == 0:
+    if not args:
         args.append('-h')
 
     parser = argparse.ArgumentParser(
