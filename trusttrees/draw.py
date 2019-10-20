@@ -101,7 +101,7 @@ def _get_graph_data_for_ns_result(ns_list, ns_result):
         )
 
     # Make all nameservers with available base domains orange because they are probably vulnerable
-    for ns_hostname, base_domain in get_available_base_domains():
+    for base_domain, ns_hostname in get_available_base_domains():
         node_name = f"Base domain '{base_domain}' unregistered!"
         potential_edge = f'{ns_hostname}->{node_name}'
         if potential_edge not in global_state.PREVIOUS_EDGES:
