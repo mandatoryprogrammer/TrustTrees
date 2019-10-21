@@ -15,6 +15,12 @@ def _add_mutually_exclusive_required_args(parser):
         dest='target_hostnames_list',
         help='Text file with a list of target hostnames.',
     )
+    parser.add_argument(
+        '-h',
+        '--help',
+        action='help',
+        help=argparse.SUPPRESS
+    )
 
 
 def _add_optional_args(parser):
@@ -93,14 +99,9 @@ def parse_args(args):
     parser = argparse.ArgumentParser(
         description="Graph out a domain's DNS delegation chain and trust trees!",
         prog='trusttrees',
+        add_help=False
     )
 
-    """
-    This hackery is due to `argparse` allowing only positional args to be required
-    Named arguments are more descriptive
-    """
-    # Remove --help from the mutually exclusive required arguments group
-    parser._action_groups[1]._group_actions = []
     _add_mutually_exclusive_required_args(parser)
     # `add_mutually_exclusive_group` does not accept a title, so change it
     parser._action_groups[1].title = 'mutually exclusive required arguments'
