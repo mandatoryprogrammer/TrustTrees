@@ -100,11 +100,11 @@ def set_global_state_with_args(args):
 
     # To use a random resolver every time
     if args.resolvers:
-        resolvers = open(args.resolvers)
-        global_state.RESOLVERS = [
-            resolver if resolver else DNS_WATCH_RESOLVER
-            for resolver in
-            resolvers.read().split('\n')
-        ][:-1]  # Skip the EOF newline
+        with open(args.resolvers) as resolvers:
+            global_state.RESOLVERS = [
+                resolver if resolver else DNS_WATCH_RESOLVER
+                for resolver in
+                resolvers.read().splitlines()
+            ]
     else:
         global_state.RESOLVERS = [DNS_WATCH_RESOLVER]
