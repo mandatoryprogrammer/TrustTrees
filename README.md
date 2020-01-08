@@ -22,6 +22,7 @@ The purpose of this tool is to allow domain owners to verify that their domain's
 
 Installation
 ------------
+In a Python 3 environment do:
 ``` {.sourceCode .bash}
 $ pip install TrustTrees
 ✨🍰✨
