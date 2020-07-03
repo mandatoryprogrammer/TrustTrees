@@ -10,7 +10,7 @@
   <a href="https://badge.fury.io/py/TrustTrees"><img src="https://badge.fury.io/py/TrustTrees.svg" alt="PyPI version"/></a>
   <a href="https://github.com/mandatoryprogrammer/TrustTrees/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+"><img src="https://img.shields.io/badge/PRs-welcome-ff69b4.svg" alt="PRs Welcome"/></a>
   <a href="https://donate.torproject.org/"><img src="https://img.shields.io/badge/Donate-Tor-orange" alt="Tor"/></a>
-  <a href="https://pypi.org/project/TrustTrees/2.0.1/"><img src="https://img.shields.io/badge/python-v3.7-blue.svg" alt="Python 3.7"/></a>
+  <a href="https://pypi.org/project/TrustTrees/"><img src="https://img.shields.io/badge/python-v3.8-blue.svg" alt="Python 3.8"/></a>
 </p>
 </p>
 
