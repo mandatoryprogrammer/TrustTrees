@@ -1,22 +1,23 @@
+<<<<<<< HEAD
 import boto3
 import pygraphviz
 
 import json
+=======
+>>>>>>> Just what I was last working on, will clean up.
 import subprocess
 
+import pygraphviz
+
 from . import global_state
-from .constants import (
-    BLUE,
-    GRAY,
-    ORANGE,
-    RED,
-    YELLOW,
-)
-from .utils import (
-    get_available_base_domains,
-    get_nameservers_with_no_ip,
-    is_authoritative,
-)
+from .constants import BLUE
+from .constants import GRAY
+from .constants import ORANGE
+from .constants import RED
+from .constants import YELLOW
+from .utils import get_available_base_domains
+from .utils import get_nameservers_with_no_ip
+from .utils import is_authoritative
 
 
 def _draw_graph_from_cache(target_hostname):
@@ -42,7 +43,7 @@ def _draw_graph_from_cache(target_hostname):
         """
     )
 
-    for cache_key, ns_result in global_state.MASTER_DNS_CACHE.items():
+    for cache_key, ns_result in sorted(global_state.MASTER_DNS_CACHE.items()):
         print(f"[ STATUS ] Building '{cache_key}'...")
         for section_of_NS_answer in (
             'additional_ns',
@@ -55,13 +56,26 @@ def _draw_graph_from_cache(target_hostname):
             )
 
     graph_data += '\n}'
+
     return graph_data
+
+
+def _sort_incomparables(incomparables):
+    """
+    This and the `sorted` calls are merely to
+    aide in diff'ing results.
+    """
+    string_to_incomparable = {}
+    for incomparable in incomparables:
+        string_to_incomparable[str(incomparable)] = incomparable
+    for string in sorted(string_to_incomparable):
+        yield string_to_incomparable[string]
 
 
 def _get_graph_data_for_ns_result(ns_list, ns_result):
     return_graph_data_string = ''
 
-    for ns_rrset in ns_list:
+    for ns_rrset in _sort_incomparables(ns_list):
         potential_edge = (
             f"{ns_result['nameserver_hostname']}->{ns_rrset['ns_hostname']}"
         )
@@ -90,16 +104,18 @@ def _get_graph_data_for_ns_result(ns_list, ns_result):
             return_graph_data_string += ';\n'
 
     # Make all nameservers which were specified with an AA flag blue
-    for ns_hostname in global_state.AUTHORITATIVE_NS_LIST:
+    for ns_hostname in sorted(global_state.AUTHORITATIVE_NS_LIST):
         return_graph_data_string += (
             f'"{ns_hostname}" [shape=ellipse, style=filled, fillcolor="{BLUE}"];\n'
         )
 
+    there_is_red = False
     # Make all nameservers without any IPs red because they are probably vulnerable
-    for ns_hostname in get_nameservers_with_no_ip():
+    for ns_hostname in sorted(get_nameservers_with_no_ip()):
         return_graph_data_string += (
             f'"{ns_hostname}" [shape=ellipse, style=filled, fillcolor="{RED}"];\n'
         )
+<<<<<<< HEAD
 
     # Make all nameservers with available base domains orange because they are probably vulnerable
     for base_domain, ns_hostname in get_available_base_domains():
@@ -113,9 +129,28 @@ def _get_graph_data_for_ns_result(ns_list, ns_result):
             return_graph_data_string += (
                 f'"{node_name}"[shape=octagon, style=filled, fillcolor="{ORANGE}"];\n'
             )
+=======
+        there_is_red = True
+
+    # we just want an easy win, do not hit gandi if there is no red
+    if there_is_red:
+        # Make all nameservers with available base domains orange
+        # because they are probably vulnerable
+        for base_domain, ns_hostname in sorted(get_available_base_domains()):
+            node_name = f"Base domain '{base_domain}' unregistered!"
+            potential_edge = f'{ns_hostname}->{node_name}'
+            if potential_edge not in global_state.PREVIOUS_EDGES:
+                global_state.PREVIOUS_EDGES.add(potential_edge)
+                return_graph_data_string += (
+                    f'"{ns_hostname}" -> "{node_name}";\n'
+                )
+                return_graph_data_string += (
+                    f'"{node_name}"[shape=octagon, style=filled, fillcolor="{ORANGE}"];\n'
+                )
+>>>>>>> Just what I was last working on, will clean up.
 
     # Make nodes for DNS error states encountered like NXDOMAIN, Timeout, etc.
-    for query_error in global_state.QUERY_ERROR_LIST:
+    for query_error in _sort_incomparables(global_state.QUERY_ERROR_LIST):
         potential_edge = (
             f'{query_error["ns_hostname"]}->{query_error["error"]}'
         )
@@ -151,15 +186,14 @@ def generate_graph(
     output_graph_file = f'./output/{target_hostname}_trust_tree_graph'
 
     graph_data = _draw_graph_from_cache(target_hostname)
-    if (
-        only_draw_problematic
-        and
-        ORANGE not in graph_data
-        and
-        RED not in graph_data
-    ):
-        print(f'[ STATUS ] {target_hostname} is not problematic, skipping!')
-        return
+    # if not (
+    #     ORANGE in graph_data
+    #     # and
+    #     or
+    #     RED in graph_data
+    # ):
+    #     print(f'[ STATUS ] {target_hostname} is not problematic, skipping!')
+    #     return
     # Render graph image
     grapher = pygraphviz.AGraph(graph_data)
 

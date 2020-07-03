@@ -12,6 +12,17 @@ DOMAIN_AVAILABILITY_CACHE = {}
 gandi_api_v4 = xmlrpc.client.ServerProxy(
     uri='https://rpc.gandi.net/xmlrpc/',
 )
+# These are registar's themselves
+# The Gandi website gives accurate results, just not their API
+GANDI_FALSE_POSITIVES = {
+    'ideay.net.ni',
+    'ibw.com.ni',
+    'pnina.ps',
+    'tmx.com.ni',
+    'nic.cr',
+    'nic.lk',
+    'ns2.ni',
+}
 
 
 def _auto_retry(registar_function):
@@ -111,10 +122,11 @@ def is_domain_available(input_domain):
     if input_domain.endswith('.'):
         input_domain = input_domain[:-1]
 
+    if input_domain in GANDI_FALSE_POSITIVES:
+        return False
+
     if input_domain in DOMAIN_AVAILABILITY_CACHE:
         return DOMAIN_AVAILABILITY_CACHE[input_domain]
-
-    print(f'[ STATUS ] Checking if {input_domain} is available...')
 
     if global_state.GANDI_API_V4_KEY:
         _can_register_function = _can_register_with_gandi_api_v4

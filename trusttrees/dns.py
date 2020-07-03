@@ -1,4 +1,5 @@
 import secrets
+import socket
 
 import dns.flags
 import dns.rcode
@@ -6,11 +7,9 @@ import dns.rdatatype
 import dns.resolver
 
 from . import global_state
-from .constants import (
-    IPV6_ENABLED,
-    MAX_RECURSION_DEPTH,
-    ROOT_SERVERS,
-)
+from .constants import IPV6_ENABLED
+from .constants import MAX_RECURSION_DEPTH
+from .constants import ROOT_SERVERS
 from .utils import is_authoritative
 
 
@@ -64,13 +63,31 @@ def _try_to_get_first_ip_for_hostname(hostname):
         )
         if answer.rrset:
             return str(answer.rrset[0])
+    except dns.resolver.NoNameservers as e:
+        if not e.msg.endswith('answered SERVFAIL'):
+            # What caused this?
+            raise
+        if len(global_state.RESOLVERS) > 1:
+            # This could infinite loop
+            print('[ STATUS ] Got SERVFAIL, trying again')
+            return _try_to_get_first_ip_for_hostname(
+                hostname=hostname,
+            )
+        # Fallback to gethostbyname
+        print('[ STATUS ] Falling back to gethostbyname')
+        try:
+            return socket.gethostbyname(hostname)
+        except socket.gaierror:
+            pass
     except (
-        dns.resolver.NoNameservers,
         dns.resolver.NXDOMAIN,
         dns.resolver.Timeout,
         dns.resolver.YXDOMAIN,
-    ):
-        pass
+    ) as e:
+        exception_name = e.__class__.__name__
+        print(
+            f'[ STATUS ] Recieved a {exception_name} exception for {hostname}',
+        )
     return ''
 
 
