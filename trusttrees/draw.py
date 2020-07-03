@@ -1,8 +1,9 @@
+import json
+import platform
+import subprocess
+
 import boto3
 import pygraphviz
-
-import json
-import subprocess
 
 from . import global_state
 from .constants import (
@@ -17,6 +18,12 @@ from .utils import (
     get_nameservers_with_no_ip,
     is_authoritative,
 )
+
+
+PLATFORM_SYSTEM_TO_OPEN_COMMAND = {
+    'darwin': 'open',
+    'linux': 'xdg-open',
+}
 
 
 def _draw_graph_from_cache(target_hostname):
@@ -168,7 +175,12 @@ def generate_graph(
         grapher.draw(filename, prog='dot')
         if open_graph_file:
             print('[ STATUS ] Opening final graph...')
-            subprocess.call(['open', filename])
+            subprocess.call(
+                [
+                    PLATFORM_SYSTEM_TO_OPEN_COMMAND[platform.system().lower()],
+                    filename,
+                ],
+            )
         if upload_args:
             print('[ STATUS ] Uploading to AWS...')
             prefix, bucket = upload_args.split(',')
