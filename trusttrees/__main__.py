@@ -21,12 +21,8 @@ def main(command_line_args=sys.argv[1:]):
     if args.target_hostname:
         target_hostnames = [args.target_hostname]
     else:
-        targets = open(args.target_hostnames_list)
-        target_hostnames = [
-            hostname
-            for hostname in
-            targets.read().split('\n')
-        ][:-1]  # Skip the EOF newline
+        with open(args.target_hostnames_list) as targets:
+            target_hostnames = targets.read().splitlines()
 
     export_formats = [
         extension.strip()
@@ -44,6 +40,7 @@ def main(command_line_args=sys.argv[1:]):
             export_formats,
             args.only_draw_problematic,
             args.open,
+            args.upload_args,
         )
 
     return 0

@@ -1,5 +1,7 @@
+import boto3
 import pygraphviz
 
+import json
 import subprocess
 
 from . import global_state
@@ -100,7 +102,7 @@ def _get_graph_data_for_ns_result(ns_list, ns_result):
         )
 
     # Make all nameservers with available base domains orange because they are probably vulnerable
-    for ns_hostname, base_domain in get_available_base_domains():
+    for base_domain, ns_hostname in get_available_base_domains():
         node_name = f"Base domain '{base_domain}' unregistered!"
         potential_edge = f'{ns_hostname}->{node_name}'
         if potential_edge not in global_state.PREVIOUS_EDGES:
@@ -144,6 +146,7 @@ def generate_graph(
     export_formats,
     only_draw_problematic,
     open_graph_file,
+    upload_args,
 ):
     output_graph_file = f'./output/{target_hostname}_trust_tree_graph'
 
@@ -166,5 +169,17 @@ def generate_graph(
         if open_graph_file:
             print('[ STATUS ] Opening final graph...')
             subprocess.call(['open', filename])
+        if upload_args:
+            print('[ STATUS ] Uploading to AWS...')
+            prefix, bucket = upload_args.split(',')
+            with open(global_state.AWS_CREDS_FILE, 'r') as f:
+                creds = json.load(f)
+            client = boto3.client(
+                's3',
+                aws_access_key_id=creds['accessKeyId'],
+                aws_secret_access_key=creds['secretAccessKey'],
+                region_name='us-west-1',
+            )
+            client.upload_file(prefix+filename, bucket, filename)
 
     print('[ SUCCESS ] Finished generating graph!')

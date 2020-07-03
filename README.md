@@ -16,12 +16,13 @@
 
 
 ## Summary
-TrustTrees is a script to recursively follow all the possible delegation paths for a target domain and graph the relationships between various nameservers along the way. TrustTrees also allows you to view where errors occured in this chain such as DNS `REFUSED`, `NXDOMAIN`, and other errors. Finally, the tool also comes with the ability to scan enumerated nameservers for expired base-domains which may allow for domain takeovers and hijacking of the target domain.
+TrustTrees is a script to recursively follow all the possible delegation paths for a target domain and graph the relationships between various nameservers along the way. TrustTrees also allows you to view where errors occurred in this chain such as DNS `REFUSED`, `NXDOMAIN`, and other errors. Finally, the tool also comes with the ability to scan enumerated nameservers for expired base-domains which may allow for domain takeovers and hijacking of the target domain.
 
 The purpose of this tool is to allow domain owners to verify that their domain's DNS is set up properly and is not vulnerable.
 
 Installation
 ------------
+In a Python 3 environment do:
 ``` {.sourceCode .bash}
 $ pip install TrustTrees
 ✨🍰✨
@@ -85,9 +86,9 @@ The above graph is a good example of a domain with many DNS errors in its delega
 ## Command-Line Options
 ```sh
 (env)bash-3.2$ trusttrees --help
-usage: trusttrees [-h] (-t TARGET_HOSTNAME | -l TARGET_HOSTNAMES_LIST) [-o]
+usage: trusttrees (-t TARGET_HOSTNAME | -l TARGET_HOSTNAMES_LIST) [-o]
                   [--only-problematic] [--no-graphing] [-x EXPORT_FORMATS]
-                  [--resolvers RESOLVERS_FILE]
+                  [-u PREFIX,BUCKET] [--resolvers RESOLVERS_FILE]
                   [--aws-credentials AWS_CREDS_FILE]
                   [--gandi-api-v4-key GANDI_API_V4_KEY]
                   [--gandi-api-v5-key GANDI_API_V5_KEY]
@@ -106,6 +107,8 @@ optional arguments:
   --no-graphing         Do not generate any graphs.
   -x EXPORT_FORMATS, --export-formats EXPORT_FORMATS
                         Comma-separated export formats, e.g: -x png,pdf
+  -u PREFIX,BUCKET, --upload-graph PREFIX,BUCKET
+                        Comma-separated AWS args, e.g: -u graphs,mybucket
   --resolvers RESOLVERS_FILE
                         Text file containing DNS resolvers to use.
 
@@ -128,10 +131,14 @@ In order to use the domain-check functionality to look for domain takeovers via 
 * *White Nameserver Nodes*: These are nameservers which have delegated the query to another nameserver and have not responded authoritatively to the query.
 * *Blue Nameserver Nodes*: These are nameservers which have answered authoritatively to the query.
 * *Red Nameserver Nodes*: These are nameservers which were found to have no IP address associated with them. They are essentially dead-ends because the resolver has no way to send queries to them.
-* *Yellow DNS Error Nodes*: These are DNS errors which occured while recursing the DNS chain.
+* *Yellow DNS Error Nodes*: These are DNS errors which occurred while recursing the DNS chain.
 * *Orange Domain Unregistered Nodes*: These nodes indicate that the base domain for the nameserver is reported by Gandi to be unregistered. This can mean the domain can be registered and the DNS hijacked!
 
 ### Edges
 * *Dashed gray lines*: This means that the query response was not authoritative.
 * *Solid blue lines*: This means the query response was authoritative.
 * *Solid black lines*: (or it links to an error/domain registered node).
+
+## License
+
+This project is licensed via [Apache License 2.0](LICENSE)
