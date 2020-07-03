@@ -2,7 +2,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-__VERSION__ = '3.0.0'
+__VERSION__ = '3.0.1'
 
 
 def requirements():
