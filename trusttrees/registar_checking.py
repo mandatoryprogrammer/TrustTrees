@@ -3,6 +3,7 @@ import time
 import xmlrpc.client
 
 import boto3
+import dnsimple
 import requests
 
 from . import global_state
@@ -98,9 +99,24 @@ def _can_register_with_aws_boto3(input_domain):
     return status.lower()
 
 
+def _can_register_with_dnsimple_api_v2(input_domain):
+    """
+    For more information, please see
+    https://developer.dnsimple.com/v2/registrar/#checkDomain
+
+    :returns bool
+    availability status returned from the API
+    """
+    client = dnsimple.Client(access_token=global_state.DNSIMPLE_ACCESS_TOKEN)
+    account_id = client.identity.whoami().data.account.id
+    response = client.registrar.check_domain(account_id, input_domain)
+    return response.data.available
+
+
 def is_domain_available(input_domain):
     """
-    Called if Gandi API key or AWS credentials file is provided.
+    Called if Gandi API key, DNSimple token, or AWS credentials file
+    is provided.
 
     Note that we do not do `lru_cache(maxsize=0)` but instead
     use our own cache. This is because we normalize input when
@@ -120,6 +136,8 @@ def is_domain_available(input_domain):
         _can_register_function = _can_register_with_gandi_api_v4
     elif global_state.GANDI_API_V5_KEY:
         _can_register_function = _can_register_with_gandi_api_v5
+    elif global_state.DNSIMPLE_ACCESS_TOKEN:
+        _can_register_function = _can_register_with_dnsimple_api_v2
     else:
         _can_register_function = _can_register_with_aws_boto3
 

@@ -90,6 +90,12 @@ def _add_optional_args(parser):
         help='Gandi API V5 key for checking if nameserver base domains are registerable.',
         metavar='GANDI_API_V5_KEY',
     )
+    optional_domain_checking_group.add_argument(
+        '--dnsimple-api-v2-token',
+        dest='dnsimple_api_v2_token',
+        help='dnsimple API V2 access token for checking if nameserver base domains are registerable.',
+        metavar='DNSIMPLE_ACCESS_TOKEN',
+    )
 
 
 def parse_args(args):

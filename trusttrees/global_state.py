@@ -2,6 +2,7 @@ from collections import defaultdict
 
 
 AWS_CREDS_FILE = ''
+DNSIMPLE_ACCESS_TOKEN = ''
 GANDI_API_V4_KEY = ''
 GANDI_API_V5_KEY = ''
 
