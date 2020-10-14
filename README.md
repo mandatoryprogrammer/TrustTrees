@@ -92,6 +92,7 @@ usage: trusttrees (-t TARGET_HOSTNAME | -l TARGET_HOSTNAMES_LIST) [-o]
                   [--aws-credentials AWS_CREDS_FILE]
                   [--gandi-api-v4-key GANDI_API_V4_KEY]
                   [--gandi-api-v5-key GANDI_API_V5_KEY]
+                  [--dnsimple-api-v2-token DNSIMPLE_ACCESS_TOKEN]
 
 Graph out a domain's DNS delegation chain and trust trees!
 
@@ -113,18 +114,21 @@ optional arguments:
                         Text file containing DNS resolvers to use.
 
 optional arguments for domain-checking:
-  --aws-credentials AWS_CREDS_FILE
-                        AWS credentials JSON file for checking if nameserver
-                        base domains are registerable.
-  --gandi-api-v4-key GANDI_API_V4_KEY
-                        Gandi API V4 key for checking if nameserver base
-                        domains are registerable.
-  --gandi-api-v5-key GANDI_API_V5_KEY
-                        Gandi API V5 key for checking if nameserver base
-                        domains are registerable.
+  --aws-credentials       AWS_CREDS_FILE
+                             AWS credentials JSON file for checking if nameserver
+                             base domains are registerable.
+  --gandi-api-v4-key      GANDI_API_V4_KEY
+                             Gandi API V4 key for checking if nameserver base
+                             domains are registerable.
+  --gandi-api-v5-key      GANDI_API_V5_KEY
+                             Gandi API V5 key for checking if nameserver base
+                             domains are registerable.
+  --dnsimple-api-v2-token DNSIMPLE_ACCESS_TOKEN
+                             DNSimple API V2 access token for checking if nameserver
+                             base domains are registerable.
 ```
 
-In order to use the domain-check functionality to look for domain takeovers via expired-domain registration you must have a Gandi production API key or AWS keys with the `route53domains:CheckDomainAvailability` IAM permission. Only Gandi is supported because they are the only registrar we are aware of with a wide range of supported TLDs, a solid API, and good support. (AWS uses Gandi behind the scenes.) [Click here to sign up for a Gandi account.](https://www.gandi.net/)
+In order to use the domain-check functionality to look for domain takeovers via expired-domain registration you must have a Gandi production API key, AWS keys with the `route53domains:CheckDomainAvailability` IAM permission, or a DNSimple access token. AWS uses Gandi behind the scenes. [Click here to sign up for a Gandi account.](https://www.gandi.net/)
 
 ## Graph Nodes/Edges Documentation
 ### Nodes

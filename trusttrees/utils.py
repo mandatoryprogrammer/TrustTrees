@@ -95,6 +95,8 @@ def set_global_state_with_args(args):
         global_state.GANDI_API_V4_KEY = args.gandi_api_v4_key
     elif args.gandi_api_v5_key:
         global_state.GANDI_API_V5_KEY = args.gandi_api_v5_key
+    elif args.dnsimple_api_v2_token:
+        global_state.DNSIMPLE_ACCESS_TOKEN = args.dnsimple_api_v2_token
     else:
         global_state.CHECK_DOMAIN_AVAILABILITY = False
 
