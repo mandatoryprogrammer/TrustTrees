@@ -24,6 +24,17 @@ If you love `TrustTrees`, please star our project on GitHub to show your support
 [@xxxx]: https://github.com/xxxx
 -->
 
+### v3.0.3
+##### October 19th, 2020
+
+#### :tada: New Features
+
+- Added the ability to ask [DNSimple](https://dnsimple.com/) for domain availability ([#37], thanks [@tanx16])
+
+[#37]: https://github.com/mandatoryprogrammer/TrustTrees/pull/37
+
+
+
 ### v3.0.2
 ##### July 4th, 2020
 
