@@ -2,5 +2,5 @@ boto3==1.9.227
 dnsimple==2.0.0
 dnspython==1.16.0
 pygraphviz==1.5
-requests==2.22.0
+requests==2.31.0
 tldextract==2.2.1
